@@ -58,8 +58,6 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
         vtkSmartPointer<vtkPropPicker>::New();
       picker->Pick(clickPos[0], clickPos[1], 0, this->GetDefaultRenderer());
  
-      double* pos = picker->GetPickPosition();
-
       vtkActor* getActorPicked = picker->GetActor();
       resetAllBoxColors();
       for (int j = 0; j < mPointerValues.size(); ++j)
@@ -99,6 +97,8 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
 };
 vtkStandardNewMacro(MouseInteractorStyle2);
 
+
+
 class vtkHoverCallback : public vtkCommand
 {
   public:
@@ -123,10 +123,8 @@ class vtkHoverCallback : public vtkCommand
             // Pick from this location.
             vtkSmartPointer<vtkPropPicker>  picker =
               vtkSmartPointer<vtkPropPicker>::New();
-            //picker->Pick(clickPos[0], clickPos[1], 0, this->GetDefaultRenderer());
-            picker->Pick(x, y, 0, mRenderer);
-            double* pos = picker->GetPickPosition();
-            vtkActor* getActorPicked = picker->GetActor();
+//            picker->Pick(x, y, 0, mRenderer);
+            vtkActor* getActorPicked = findPickedActorWithinWiderThreshold(picker, x, y);
             for (int j = 0; j < mPointerValues.size(); ++j)
             {
               if( getActorPicked == mPointerValues[j] )
@@ -157,6 +155,11 @@ class vtkHoverCallback : public vtkCommand
       mRenderer = aRender;
     }
 
+    virtual void setWindowRenderer(vtkRenderWindow* wRender)
+    {
+      mRenderWindow = wRender;
+    }
+
     virtual void setObjectDescriptions(const std::vector<std::string>& descriptions)
     {
       mDescriptions = descriptions;
@@ -172,6 +175,46 @@ class vtkHoverCallback : public vtkCommand
     std::vector<vtkActor*> mPointerValues;
     vtkRenderWindowInteractor* mRenderWindowInteractor;
     vtkRenderer* mRenderer;
+    vtkRenderWindow* mRenderWindow;
+
+    virtual vtkActor* findPickedActorWithinWiderThreshold(vtkSmartPointer<vtkPropPicker>& picker,
+                                                          const int x, const int y)
+    {
+      int xMin, xMax, yMin, yMax;
+
+      vtkActor* getActorPicked = NULL;
+      defineSearchThresholdBoxForPickedObjectNearCursor(x, y, xMin, xMax, yMin, yMax);
+      //Loop through the larger x/y range to see if any objects are "picked" nearby,
+      // this way it will pick without the cursor needing to be right on top of the object
+      for (int i = xMin; i <= xMax; ++i)
+      {
+        for (int j = yMin; j <= yMax; ++j)
+        {
+          picker->Pick(i, j, 0, mRenderer);
+          getActorPicked = picker->GetActor();
+          if( getActorPicked != NULL)
+            break;
+        }
+      }
+      return getActorPicked;
+    }
+
+    void defineSearchThresholdBoxForPickedObjectNearCursor(const int x, const int y,
+                                                           int& xMin, int& xMax,
+                                                           int& yMin, int& yMax)
+    {
+      const int thresholdSize_pixel = 2;
+      int* winSize = mRenderWindow->GetSize();
+
+      xMin = x - thresholdSize_pixel;
+      if( xMin < 0 )  xMin = 0;
+      xMax = x + thresholdSize_pixel;
+      if( xMax > winSize[0] )  xMax = winSize[0];
+      yMin = y - thresholdSize_pixel;
+      if( yMin < 0 )  yMin = 0;
+      yMax = y + thresholdSize_pixel;
+      if( yMax > winSize[1] )  yMax = winSize[1];
+    }
 
     void resetAllBoxColors(void)
     {
@@ -268,7 +311,7 @@ int main (int argc, char *argv[])
     outline[i]->SetMapper(mapOutline[i]);
     outline[i]->GetProperty()->SetColor(0,0,0);
     boxActorPointer[i] = outline[i];
-    std::cout << "Created outline " << i << "with address: " << outline[i] << std::endl;
+    std::cout << "Created outline " << i << " with address: " << outline[i] << std::endl;
   }
 
   // It is convenient to create an initial view of the data. The
@@ -304,6 +347,7 @@ int main (int argc, char *argv[])
   hoverWidget->AddObserver(vtkCommand::EndInteractionEvent,hoverCallback);
   hoverCallback->setRenderWindowInteractor(iren);
   hoverCallback->setRenderer(aRenderer);
+  hoverCallback->setWindowRenderer(renWin);
   hoverCallback->setObjectDescriptions(boxDescription);
   hoverCallback->setObjectPointerValues(boxActorPointer);
 
