@@ -9,11 +9,8 @@ include(${VTK_USE_FILE})
 set(CMAKE_CXX_FLAGS "-std=c++11")
 add_executable(cartoon
                MACOSX_BUNDLE
-               cartoon) 
-#               cubeGlyph
-#               cubeAnimation
-#               colorLookupTable
-#               keyboardCmds)
+               cartoon
+               mouse_interact)
 
 if(VTK_LIBRARIES)
   target_link_libraries(cartoon ${VTK_LIBRARIES})

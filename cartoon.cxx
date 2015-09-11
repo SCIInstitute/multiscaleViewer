@@ -11,7 +11,6 @@
 #include <vtkActor.h>
 #include <vtkOutlineFilter.h>
 #include <vtkCamera.h>
-#include <vtkStripper.h>
 #include <vtkLookupTable.h>
 #include <vtkImageDataGeometryFilter.h>
 #include <vtkProperty.h>
@@ -22,208 +21,18 @@
 #include <vtkImageActor.h>
 #include <vtkSmartPointer.h>
 #include <vtkImageMapper3D.h>
-#include <vtkInteractorStyleTrackballCamera.h>
-#include <vtkAnimationCue.h>
-#include <vtkAnimationScene.h>
-#include <vtkCubeSource.h>
 #include <vtkHoverWidget.h>
 #include <vtkProgrammableFilter.h>
 #include <vtkCommand.h>
 #include <memory>
 #include <vtkCoordinate.h>
 #include <vtkRendererCollection.h>
-#include <string>
-
 #include <vtkPropPicker.h>
-
+#include <string>
+#include "mouse_interact.hpp"
 #include <vector>
 
-//ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS will highlight a volume bounding box
-// if it is clicked-on, and will send box's description to stdout.
-//#define ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS
-
-class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
-{
-  public:
-    static MouseInteractorStyle2* New();
-    vtkTypeMacro(MouseInteractorStyle2, vtkInteractorStyleTrackballCamera);
- 
-    virtual void OnLeftButtonDown()
-    {
-      int* clickPos = this->GetInteractor()->GetEventPosition();
-
-#ifdef ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS 
-      // Pick from this location.
-      vtkSmartPointer<vtkPropPicker>  picker =
-        vtkSmartPointer<vtkPropPicker>::New();
-      picker->Pick(clickPos[0], clickPos[1], 0, this->GetDefaultRenderer());
- 
-      vtkActor* getActorPicked = picker->GetActor();
-      resetAllBoxColors();
-      for (int j = 0; j < mPointerValues.size(); ++j)
-      {
-        if( getActorPicked == mPointerValues[j] )
-        {
-          mPointerValues[j]->GetProperty()->SetColor(1,1,1);
-          std::cout << "Selected " << mDescriptions[j] << "." << std::endl;
-        }
-      }
-#endif //ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS 
-      // Forward events (this forces a re-render)
-      vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
-    }
-
-    virtual void setObjectDescriptions(const std::vector<std::string>& descriptions)
-    {
-      mDescriptions = descriptions;
-    }
-
-    virtual void setObjectPointerValues(std::vector<vtkActor*>& pointerValues)
-    {
-      mPointerValues = pointerValues;
-    }
- 
-  private:
-    std::vector<std::string> mDescriptions;
-    std::vector<vtkActor*> mPointerValues;
-
-    void resetAllBoxColors(void)
-    {
-      for (auto it = mPointerValues.begin(); it != mPointerValues.end(); ++it)
-      {
-        (*it)->GetProperty()->SetColor(0,0,0);
-      }
-    }
-};
 vtkStandardNewMacro(MouseInteractorStyle2);
-
-
-
-class vtkHoverCallback : public vtkCommand
-{
-  public:
-    static vtkHoverCallback *New()
-    {
-      return new vtkHoverCallback;
-    }
- 
-    vtkHoverCallback() {}
- 
-    virtual void Execute(vtkObject*, unsigned long event, void *vtkNotUsed(calldata))
-    {
-      switch (event) 
-      {
-        case vtkCommand::TimerEvent:
-          //std::cout << "TimerEvent -> mouse stopped moving and the widget hovered" << std::endl; 
-          //int* clickPos = this->GetInteractor()->GetEventPosition();
-          if( mRenderWindowInteractor != NULL )
-          {
-            int x, y;
-            mRenderWindowInteractor->GetMousePosition(&x, &y);
-            // Pick from this location.
-            vtkSmartPointer<vtkPropPicker>  picker =
-              vtkSmartPointer<vtkPropPicker>::New();
-//            picker->Pick(x, y, 0, mRenderer);
-            vtkActor* getActorPicked = findPickedActorWithinWiderThreshold(picker, x, y);
-            for (int j = 0; j < mPointerValues.size(); ++j)
-            {
-              if( getActorPicked == mPointerValues[j] )
-              {
-                std::cout << "Hovering over " << mDescriptions[j] << "." << std::endl;
-                mPointerValues[j]->GetProperty()->SetColor(1,1,1);
-                mRenderWindowInteractor->Render(); //force render so color highlight shows
-              }
-            }
-          }
-          break;
-  
-        case vtkCommand::EndInteractionEvent:
-          //std::cout << "EndInteractionEvent -> mouse started to move" << std::endl; 
-          resetAllBoxColors();
-          mRenderWindowInteractor->Render(); //force render so color highlight shows
-          break;
-      }
-    }
-
-    virtual void setRenderWindowInteractor(vtkRenderWindowInteractor* rwi)
-    {
-      mRenderWindowInteractor = rwi;
-    }
-
-    virtual void setRenderer(vtkRenderer* aRender)
-    {
-      mRenderer = aRender;
-    }
-
-    virtual void setWindowRenderer(vtkRenderWindow* wRender)
-    {
-      mRenderWindow = wRender;
-    }
-
-    virtual void setObjectDescriptions(const std::vector<std::string>& descriptions)
-    {
-      mDescriptions = descriptions;
-    }
-
-    virtual void setObjectPointerValues(std::vector<vtkActor*>& pointerValues)
-    {
-      mPointerValues = pointerValues;
-    }
-
-  private:
-    std::vector<std::string> mDescriptions;
-    std::vector<vtkActor*> mPointerValues;
-    vtkRenderWindowInteractor* mRenderWindowInteractor;
-    vtkRenderer* mRenderer;
-    vtkRenderWindow* mRenderWindow;
-
-    virtual vtkActor* findPickedActorWithinWiderThreshold(vtkSmartPointer<vtkPropPicker>& picker,
-                                                          const int x, const int y)
-    {
-      int xMin, xMax, yMin, yMax;
-
-      vtkActor* getActorPicked = NULL;
-      defineSearchThresholdBoxForPickedObjectNearCursor(x, y, xMin, xMax, yMin, yMax);
-      //Loop through the larger x/y range to see if any objects are "picked" nearby,
-      // this way it will pick without the cursor needing to be right on top of the object
-      for (int i = xMin; i <= xMax; ++i)
-      {
-        for (int j = yMin; j <= yMax; ++j)
-        {
-          picker->Pick(i, j, 0, mRenderer);
-          getActorPicked = picker->GetActor();
-          if( getActorPicked != NULL)
-            break;
-        }
-      }
-      return getActorPicked;
-    }
-
-    void defineSearchThresholdBoxForPickedObjectNearCursor(const int x, const int y,
-                                                           int& xMin, int& xMax,
-                                                           int& yMin, int& yMax)
-    {
-      const int thresholdSize_pixel = 2;
-      int* winSize = mRenderWindow->GetSize();
-
-      xMin = x - thresholdSize_pixel;
-      if( xMin < 0 )  xMin = 0;
-      xMax = x + thresholdSize_pixel;
-      if( xMax > winSize[0] )  xMax = winSize[0];
-      yMin = y - thresholdSize_pixel;
-      if( yMin < 0 )  yMin = 0;
-      yMax = y + thresholdSize_pixel;
-      if( yMax > winSize[1] )  yMax = winSize[1];
-    }
-
-    void resetAllBoxColors(void)
-    {
-      for (auto it = mPointerValues.begin(); it != mPointerValues.end(); ++it)
-      {
-        (*it)->GetProperty()->SetColor(0,0,0);
-      }
-    }
-};
 
 std::string createDescription(int boxNum, int size[], double origin[])
 {
