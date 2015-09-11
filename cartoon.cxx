@@ -34,37 +34,8 @@
 #include <string>
 
 #include <vtkPropPicker.h>
-#include <vtkSphereSource.h>
 
 #include <vector>
-
- 
-class MouseInteractorStyle3 : public vtkInteractorStyleTrackballCamera
-{
-  public:
-    static MouseInteractorStyle3* New();
- 
-    virtual void OnLeftButtonDown() 
-    {
-      std::cout << "Left click @ ";
-      int x = this->Interactor->GetEventPosition()[0];
-      int y = this->Interactor->GetEventPosition()[1];
-      std::cout << "(" << x << "," << y << ")" << std::endl;
-      vtkSmartPointer<vtkCoordinate> coordinate = 
-        vtkSmartPointer<vtkCoordinate>::New();
-      coordinate->SetCoordinateSystemToDisplay();
-      coordinate->SetValue(x,y,0);
-/* 
-      // This doesn't produce the right value if the sphere is zoomed in???
-      double* world = coordinate->GetComputedWorldValue(this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer());
-      std::cout << "World coordinate: " << world[0] << ", " << world[1] << ", " << world[2] << std::endl;
-*/ 
-      // Forward events
-      vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
-    }
-};
-vtkStandardNewMacro(MouseInteractorStyle3);
-
 
 
 class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
@@ -95,15 +66,6 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
         }
       }
 
-/*      //Create a sphere
-      vtkSmartPointer<vtkSphereSource> sphereSource =
-        vtkSmartPointer<vtkSphereSource>::New();
-      sphereSource->SetCenter(pos[0], pos[1], pos[2]);
-      sphereSource->SetRadius(0.1);
-*/ 
- 
-      //this->GetInteractor()->GetRenderWindow()->GetRenderers()->GetDefaultRenderer()->AddActor(actor);
-//      this->GetDefaultRenderer()->AddActor(actor);
       // Forward events
       vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
     }
