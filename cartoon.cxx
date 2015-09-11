@@ -36,6 +36,8 @@
 #include <vtkPropPicker.h>
 #include <vtkSphereSource.h>
 
+#include <vector>
+
  
 class MouseInteractorStyle3 : public vtkInteractorStyleTrackballCamera
 {
@@ -81,26 +83,52 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
       picker->Pick(clickPos[0], clickPos[1], 0, this->GetDefaultRenderer());
  
       double* pos = picker->GetPickPosition();
-      std::cout << "Pick position (world coordinates) is: "
-                << pos[0] << " " << pos[1]
-                << " " << pos[2] << std::endl;
- 
-      std::cout << "Picked actor: " << picker->GetActor() << std::endl;
-      //Create a sphere
+
+      vtkActor* getActorPicked = picker->GetActor();
+      resetAllBoxColors();
+      for (int j = 0; j < mPointerValues.size(); ++j)
+      {
+        if( getActorPicked == mPointerValues[j] )
+        {
+          mPointerValues[j]->GetProperty()->SetColor(1,1,1);
+          std::cout << "Selected " << mDescriptions[j] << "." << std::endl;
+        }
+      }
+
+/*      //Create a sphere
       vtkSmartPointer<vtkSphereSource> sphereSource =
         vtkSmartPointer<vtkSphereSource>::New();
       sphereSource->SetCenter(pos[0], pos[1], pos[2]);
       sphereSource->SetRadius(0.1);
- 
+*/ 
  
       //this->GetInteractor()->GetRenderWindow()->GetRenderers()->GetDefaultRenderer()->AddActor(actor);
 //      this->GetDefaultRenderer()->AddActor(actor);
       // Forward events
       vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
     }
+
+    virtual void setObjectDescriptions(const std::vector<std::string>& descriptions)
+    {
+      mDescriptions = descriptions;
+    }
+
+    virtual void setObjectPointerValues(const std::vector<vtkActor*> pointerValues)
+    {
+      mPointerValues = pointerValues;
+    }
  
   private:
- 
+    std::vector<std::string> mDescriptions;
+    std::vector<vtkActor*> mPointerValues;
+
+    void resetAllBoxColors(void)
+    {
+      for (auto it = mPointerValues.begin(); it != mPointerValues.end(); ++it)
+      {
+        (*it)->GetProperty()->SetColor(0,0,0);
+      }
+    }
 };
 vtkStandardNewMacro(MouseInteractorStyle2);
 
@@ -135,28 +163,58 @@ int main (int argc, char *argv[])
 
   //Use vtkVolume16Reader object but no image data will be contained for this
   // demo; just create it and set data dimensions for size of the outline
+  int numBoxes = 4;
+  int boxSize[4][3] = { {1500, 1000, 500},
+                        {40,   1200, 1000},
+                        {200,   150, 100},
+                        { 40,    40,  40} };
+  double boxOrigin[4][3] = { {0, 0, 0},
+                             {100, 200, 100},
+                             {550, 150, 50},
+                             {1200, 800, 400} };
+  std::vector<std::string> boxDescription(4);
+  std::vector<vtkActor*> boxActorPointer(4);
 
-  //Box 1
-  vtkSmartPointer<vtkVolume16Reader> box1;
-  box1 = vtkSmartPointer<vtkVolume16Reader>::New();
-  box1->SetDataDimensions(1536,1024);
-  box1->SetImageRange(1, 500);
-  box1->Update();
+  std::vector <vtkSmartPointer<vtkVolume16Reader> > box(numBoxes);
+  std::vector <vtkSmartPointer<vtkOutlineFilter> > outlineData(numBoxes);
+  std::vector <vtkSmartPointer<vtkPolyDataMapper> > mapOutline(numBoxes);
+  std::vector <vtkSmartPointer<vtkActor> > outline(numBoxes);
 
-  // An outline provides context around the data.
-  vtkSmartPointer<vtkOutlineFilter> outlineData =
-    vtkSmartPointer<vtkOutlineFilter>::New();
-  outlineData->SetInputConnection(box1->GetOutputPort());
-  outlineData->Update();
+  for (int i = 0; i < numBoxes; ++i)
+  {
+    box[i] = vtkSmartPointer<vtkVolume16Reader>::New();
+    box[i]->SetDataDimensions(boxSize[i][0],boxSize[i][1]);
+    box[i]->SetImageRange(1, boxSize[i][2]);
+    box[i]->SetDataOrigin(boxOrigin[i]);
+    box[i]->Update();
 
-  vtkSmartPointer<vtkPolyDataMapper> mapOutline =
-    vtkSmartPointer<vtkPolyDataMapper>::New();
-  mapOutline->SetInputConnection(outlineData->GetOutputPort());
+    char tmpString[50];
+    sprintf(tmpString, "%2d", i);
+    std::string description = "Volume ";
+    description.append(tmpString);
+    description += " of size (";
+    sprintf(tmpString, "%d,%d,%d", boxSize[i][0], boxSize[i][1], boxSize[i][2]);
+    description.append(tmpString);
+    description += ") at (";
+    sprintf(tmpString, "%d,%d,%d", (int)boxOrigin[i][0], (int)boxOrigin[i][1],
+            (int)boxOrigin[i][2]);
+    description.append(tmpString);
+    description += ")";
+    boxDescription[i] = description;
 
-  vtkSmartPointer<vtkActor> outline =
-    vtkSmartPointer<vtkActor>::New();
-  outline->SetMapper(mapOutline);
-  outline->GetProperty()->SetColor(0,0,0);
+    outlineData[i] = vtkSmartPointer<vtkOutlineFilter>::New();
+    outlineData[i]->SetInputConnection(box[i]->GetOutputPort());
+    outlineData[i]->Update();
+  
+    mapOutline[i] = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapOutline[i]->SetInputConnection(outlineData[i]->GetOutputPort());
+  
+    outline[i] = vtkSmartPointer<vtkActor>::New();
+    outline[i]->SetMapper(mapOutline[i]);
+    outline[i]->GetProperty()->SetColor(0,0,0);
+    boxActorPointer[i] = outline[i];
+    std::cout << "Created outline " << i << "with address: " << outline[i] << std::endl;
+  }
 
   // It is convenient to create an initial view of the data. The
   // FocalPoint and Position form a vector direction. Later on
@@ -174,10 +232,15 @@ int main (int argc, char *argv[])
   vtkSmartPointer<MouseInteractorStyle2> style2 =
     vtkSmartPointer<MouseInteractorStyle2>::New();
   style2->SetDefaultRenderer(aRenderer);
+  style2->setObjectDescriptions(boxDescription);
+  style2->setObjectPointerValues(boxActorPointer);
   iren->SetInteractorStyle(style2);
 
   // Actors are added to the renderer.
-  aRenderer->AddActor(outline);
+  for (int i = 0; i < numBoxes; ++i)
+  {
+    aRenderer->AddActor(outline[i]);
+  }
 
   // An initial camera view is created.  The Dolly() method moves
   // the camera towards the FocalPoint, thereby enlarging the image.
