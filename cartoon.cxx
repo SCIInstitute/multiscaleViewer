@@ -77,7 +77,7 @@ int main (int argc, char *argv[])
 
   // Set a background color for the renderer and set the size of the
   // render window (expressed in pixels).
-  aRenderer->SetBackground(.2, .3, .4);
+  aRenderer->SetBackground(.75, .75, .75);
   renWin->SetSize(900, 600);
 
   //Use vtkVolume16Reader object but no image data will be contained for this
@@ -119,6 +119,7 @@ int main (int argc, char *argv[])
     outline[i] = vtkSmartPointer<vtkActor>::New();
     outline[i]->SetMapper(mapOutline[i]);
     outline[i]->GetProperty()->SetColor(0,0,0);
+    outline[i]->GetProperty()->SetLineWidth(1.5);
     boxActorPointer[i] = outline[i];
     std::cout << "Created outline " << i << " with address: " << outline[i] << std::endl;
   }

@@ -10,7 +10,6 @@
 #include <vtkPropPicker.h>
 #include <vtkSmartPointer.h>
 #include <vtkProperty.h>
-
 #include "mouse_interact.hpp"
 
 
