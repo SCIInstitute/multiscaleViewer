@@ -94,7 +94,24 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
 };
 vtkStandardNewMacro(MouseInteractorStyle2);
 
+std::string createDescription(int boxNum, int size[], double origin[])
+{
+  char tmpString[50];
 
+  std::string description = "Volume ";
+  sprintf(tmpString, "%2d", boxNum);
+  description.append(tmpString);
+  description += " of size (";
+  sprintf(tmpString, "%d,%d,%d", size[0], size[1], size[2]);
+  description.append(tmpString);
+  description += ") at (";
+  sprintf(tmpString, "%d,%d,%d", (int)origin[0], (int)origin[1],
+          (int)origin[2]);
+  description.append(tmpString);
+  description += ")";
+
+  return description;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 int main (int argc, char *argv[])
@@ -150,19 +167,7 @@ int main (int argc, char *argv[])
     box[i]->SetDataOrigin(boxOrigin[i]);
     box[i]->Update();
 
-    char tmpString[50];
-    sprintf(tmpString, "%2d", i);
-    std::string description = "Volume ";
-    description.append(tmpString);
-    description += " of size (";
-    sprintf(tmpString, "%d,%d,%d", boxSize[i][0], boxSize[i][1], boxSize[i][2]);
-    description.append(tmpString);
-    description += ") at (";
-    sprintf(tmpString, "%d,%d,%d", (int)boxOrigin[i][0], (int)boxOrigin[i][1],
-            (int)boxOrigin[i][2]);
-    description.append(tmpString);
-    description += ")";
-    boxDescription[i] = description;
+    boxDescription[i] = createDescription(i, boxSize[i], boxOrigin[i]);
 
     outlineData[i] = vtkSmartPointer<vtkOutlineFilter>::New();
     outlineData[i]->SetInputConnection(box[i]->GetOutputPort());
