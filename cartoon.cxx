@@ -38,6 +38,9 @@
 
 #include <vector>
 
+//ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS will highlight a volume bounding box
+// if it is clicked-on, and will send box's description to stdout.
+//#define ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS
 
 class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
 {
@@ -48,7 +51,8 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
     virtual void OnLeftButtonDown()
     {
       int* clickPos = this->GetInteractor()->GetEventPosition();
- 
+
+#ifdef ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS 
       // Pick from this location.
       vtkSmartPointer<vtkPropPicker>  picker =
         vtkSmartPointer<vtkPropPicker>::New();
@@ -66,8 +70,8 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
           std::cout << "Selected " << mDescriptions[j] << "." << std::endl;
         }
       }
-
-      // Forward events
+#endif //ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS 
+      // Forward events (this forces a re-render)
       vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
     }
 
@@ -76,7 +80,7 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
       mDescriptions = descriptions;
     }
 
-    virtual void setObjectPointerValues(const std::vector<vtkActor*> pointerValues)
+    virtual void setObjectPointerValues(std::vector<vtkActor*>& pointerValues)
     {
       mPointerValues = pointerValues;
     }
@@ -108,36 +112,39 @@ class vtkHoverCallback : public vtkCommand
     virtual void Execute(vtkObject*, unsigned long event, void *vtkNotUsed(calldata))
     {
       switch (event) 
-        {
+      {
         case vtkCommand::TimerEvent:
           //std::cout << "TimerEvent -> mouse stopped moving and the widget hovered" << std::endl; 
-          int* clickPos = this->GetInteractor()->GetEventPosition();
-   
-          // Pick from this location.
-          vtkSmartPointer<vtkPropPicker>  picker =
-            vtkSmartPointer<vtkPropPicker>::New();
-          picker->Pick(clickPos[0], clickPos[1], 0, this->GetDefaultRenderer());
-     
-          double* pos = picker->GetPickPosition();
-    
-          vtkActor* getActorPicked = picker->GetActor();
-
-          for (int j = 0; j < mPointerValues.size(); ++j)
+          //int* clickPos = this->GetInteractor()->GetEventPosition();
+          if( mRenderWindowInteractor != NULL )
           {
-            if( getActorPicked == mPointerValues[j] )
+            int x, y;
+            mRenderWindowInteractor->GetMousePosition(&x, &y);
+            // Pick from this location.
+            vtkSmartPointer<vtkPropPicker>  picker =
+              vtkSmartPointer<vtkPropPicker>::New();
+            //picker->Pick(clickPos[0], clickPos[1], 0, this->GetDefaultRenderer());
+            picker->Pick(x, y, 0, mRenderer);
+            double* pos = picker->GetPickPosition();
+            vtkActor* getActorPicked = picker->GetActor();
+            for (int j = 0; j < mPointerValues.size(); ++j)
             {
-              mPointerValues[j]->GetProperty()->SetColor(1,1,1);
-              std::cout << "Selected " << mDescriptions[j] << "." << std::endl;
+              if( getActorPicked == mPointerValues[j] )
+              {
+                std::cout << "Hovering over " << mDescriptions[j] << "." << std::endl;
+                mPointerValues[j]->GetProperty()->SetColor(1,1,1);
+                mRenderWindowInteractor->Render(); //force render so color highlight shows
+              }
             }
           }
-  
           break;
   
         case vtkCommand::EndInteractionEvent:
           //std::cout << "EndInteractionEvent -> mouse started to move" << std::endl; 
           resetAllBoxColors();
+          mRenderWindowInteractor->Render(); //force render so color highlight shows
           break;
-        }
+      }
     }
 
     virtual void setRenderWindowInteractor(vtkRenderWindowInteractor* rwi)
@@ -145,12 +152,17 @@ class vtkHoverCallback : public vtkCommand
       mRenderWindowInteractor = rwi;
     }
 
+    virtual void setRenderer(vtkRenderer* aRender)
+    {
+      mRenderer = aRender;
+    }
+
     virtual void setObjectDescriptions(const std::vector<std::string>& descriptions)
     {
       mDescriptions = descriptions;
     }
 
-    virtual void setObjectPointerValues(const std::vector<vtkActor*> pointerValues)
+    virtual void setObjectPointerValues(std::vector<vtkActor*>& pointerValues)
     {
       mPointerValues = pointerValues;
     }
@@ -159,6 +171,7 @@ class vtkHoverCallback : public vtkCommand
     std::vector<std::string> mDescriptions;
     std::vector<vtkActor*> mPointerValues;
     vtkRenderWindowInteractor* mRenderWindowInteractor;
+    vtkRenderer* mRenderer;
 
     void resetAllBoxColors(void)
     {
@@ -289,9 +302,10 @@ int main (int argc, char *argv[])
     vtkSmartPointer<vtkHoverCallback>::New();
   hoverWidget->AddObserver(vtkCommand::TimerEvent,hoverCallback);
   hoverWidget->AddObserver(vtkCommand::EndInteractionEvent,hoverCallback);
-hoverCallback->setRenderWindowInteractor(iren);
-hoverCallback->setObjectDescriptions(boxDescription);
-hoverCallback->setObjectPointerValues(boxActorPointer);
+  hoverCallback->setRenderWindowInteractor(iren);
+  hoverCallback->setRenderer(aRenderer);
+  hoverCallback->setObjectDescriptions(boxDescription);
+  hoverCallback->setObjectPointerValues(boxActorPointer);
 
   // Actors are added to the renderer.
   for (int i = 0; i < numBoxes; ++i)
