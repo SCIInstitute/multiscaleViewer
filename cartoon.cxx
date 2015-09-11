@@ -29,10 +29,6 @@
 #include <vtkProgrammableFilter.h>
 #include <vtkCommand.h>
 #include <memory>
-#include "cubeGlyph.h"
-#include "cubeAnimation.h"
-#include "colorLookupTable.h"
-#include "keyboardCmds.h"
 #include <vtkCoordinate.h>
 #include <vtkRendererCollection.h>
 #include <string>
@@ -141,8 +137,8 @@ int main (int argc, char *argv[])
   // demo; just create it and set data dimensions for size of the outline
 
   //Box 1
-  vtkSmartPointer<vtkVolume16Reader> box1
-    = vtkSmartPointer<vtkVolume16Reader>::New();
+  vtkSmartPointer<vtkVolume16Reader> box1;
+  box1 = vtkSmartPointer<vtkVolume16Reader>::New();
   box1->SetDataDimensions(1536,1024);
   box1->SetImageRange(1, 500);
   box1->Update();
