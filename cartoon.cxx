@@ -142,6 +142,8 @@ int main (int argc, char *argv[])
   style2->SetDefaultRenderer(aRenderer);
   style2->setObjectDescriptions(boxDescription);
   style2->setObjectPointerValues(boxActorPointer);
+  style2->setRenderer(aRenderer);
+  style2->setWindowRenderer(renWin);
   iren->SetInteractorStyle(style2);
 
   //Create hover widget

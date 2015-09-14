@@ -14,9 +14,10 @@
 #include <vtkSmartPointer.h>
 
 
+
 //ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS will highlight a volume bounding box
 // if it is clicked-on, and will send box's description to stdout.
-//#define ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS
+#define ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS
 
 class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
 {
@@ -27,11 +28,16 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
     virtual void setObjectDescriptions(
         const std::vector<std::string>& descriptions);
     virtual void setObjectPointerValues(std::vector<vtkActor*>& pointerValues);
+    virtual void setRenderer(vtkRenderer* aRender);
+    virtual void setWindowRenderer(vtkRenderWindow* wRender);
  
   private:
     std::vector<std::string> mDescriptions;
     std::vector<vtkActor*> mPointerValues;
     void resetAllBoxColors(void);
+
+    vtkRenderer* mRenderer;
+    vtkRenderWindow* mRenderWindow;
 };
 
 
@@ -56,19 +62,13 @@ class vtkHoverCallback : public vtkCommand
     virtual void setObjectPointerValues(std::vector<vtkActor*>& pointerValues);
 
   private:
+    void resetAllBoxColors(void);
+
     std::vector<std::string> mDescriptions;
     std::vector<vtkActor*> mPointerValues;
     vtkRenderWindowInteractor* mRenderWindowInteractor;
     vtkRenderer* mRenderer;
     vtkRenderWindow* mRenderWindow;
-
-    virtual vtkActor* findPickedActorWithinWiderThreshold(
-        vtkSmartPointer<vtkPropPicker>& picker,
-        const int x, const int y);
-    void defineSearchThresholdBoxForPickedObjectNearCursor(
-        const int x, const int y, int& xMin, int& xMax,
-        int& yMin, int& yMax);
-    void resetAllBoxColors(void);
 };
 
 

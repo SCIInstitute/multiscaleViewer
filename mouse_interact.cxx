@@ -13,6 +13,49 @@
 #include "mouse_interact.hpp"
 
 
+
+static void defineSearchThresholdBoxForPickedObjectNearCursor(
+    const int x, const int y, int& xMin, int& xMax, int& yMin, int& yMax, int* winSize)
+{
+    const int thresholdSize_pixel = 2;
+  
+    xMin = x - thresholdSize_pixel;
+    if( xMin < 0 )  xMin = 0;
+    xMax = x + thresholdSize_pixel;
+    if( xMax > winSize[0] )  xMax = winSize[0];
+    yMin = y - thresholdSize_pixel;
+    if( yMin < 0 )  yMin = 0;
+    yMax = y + thresholdSize_pixel;
+    if( yMax > winSize[1] )  yMax = winSize[1];
+}
+
+static vtkActor* findPickedActorWithinWiderThreshold(
+    vtkSmartPointer<vtkPropPicker>& picker, vtkRenderWindow* renWin,
+    vtkRenderer* ren, const int x, const int y)
+{
+    int xMin, xMax, yMin, yMax;
+  
+    vtkActor* getActorPicked = NULL;
+    defineSearchThresholdBoxForPickedObjectNearCursor(x, y, xMin, xMax, yMin, yMax,
+        renWin->GetSize());
+    //Loop through the larger x/y range to see if any objects are "picked" nearby,
+    // this way it will pick without the cursor needing to be right on top of the object
+    for (int i = xMin; i <= xMax; ++i)
+    {
+        for (int j = yMin; j <= yMax; ++j)
+        {
+            picker->Pick(i, j, 0, ren);
+            getActorPicked = picker->GetActor();
+            if( getActorPicked != NULL)
+                break;
+        }
+    }
+    return getActorPicked;
+}
+
+
+
+////////////////////// MouseInteractorStyle2
 void MouseInteractorStyle2::OnLeftButtonDown()
 {
     int* clickPos = this->GetInteractor()->GetEventPosition();
@@ -23,7 +66,8 @@ void MouseInteractorStyle2::OnLeftButtonDown()
       vtkSmartPointer<vtkPropPicker>::New();
     picker->Pick(clickPos[0], clickPos[1], 0, this->GetDefaultRenderer());
 
-    vtkActor* getActorPicked = picker->GetActor();
+    vtkActor* getActorPicked = findPickedActorWithinWiderThreshold(picker,
+        mRenderWindow, mRenderer, clickPos[0], clickPos[1]);
     resetAllBoxColors();
     for (int j = 0; j < mPointerValues.size(); ++j)
     {
@@ -42,6 +86,16 @@ void MouseInteractorStyle2::setObjectDescriptions(
     const std::vector<std::string>& descriptions)
 {
     mDescriptions = descriptions;
+}
+
+void MouseInteractorStyle2::setRenderer(vtkRenderer* aRender)
+{
+    mRenderer = aRender;
+}
+
+void MouseInteractorStyle2::setWindowRenderer(vtkRenderWindow* wRender)
+{
+    mRenderWindow = wRender;
 }
 
 void MouseInteractorStyle2::setObjectPointerValues(
@@ -73,7 +127,8 @@ void vtkHoverCallback::Execute(vtkObject*, unsigned long event,
             // Pick from this location.
             vtkSmartPointer<vtkPropPicker>  picker =
               vtkSmartPointer<vtkPropPicker>::New();
-            vtkActor* getActorPicked = findPickedActorWithinWiderThreshold(picker, x, y);
+            vtkActor* getActorPicked = findPickedActorWithinWiderThreshold(picker,
+                mRenderWindow, mRenderer, x, y);
             for (int j = 0; j < mPointerValues.size(); ++j)
             {
                 if( getActorPicked == mPointerValues[j] )
@@ -120,44 +175,6 @@ void vtkHoverCallback::setObjectPointerValues(
     std::vector<vtkActor*>& pointerValues)
 {
     mPointerValues = pointerValues;
-}
-
-vtkActor* vtkHoverCallback::findPickedActorWithinWiderThreshold(
-    vtkSmartPointer<vtkPropPicker>& picker, const int x, const int y)
-{
-    int xMin, xMax, yMin, yMax;
-  
-    vtkActor* getActorPicked = NULL;
-    defineSearchThresholdBoxForPickedObjectNearCursor(x, y, xMin, xMax, yMin, yMax);
-    //Loop through the larger x/y range to see if any objects are "picked" nearby,
-    // this way it will pick without the cursor needing to be right on top of the object
-    for (int i = xMin; i <= xMax; ++i)
-    {
-        for (int j = yMin; j <= yMax; ++j)
-        {
-            picker->Pick(i, j, 0, mRenderer);
-            getActorPicked = picker->GetActor();
-            if( getActorPicked != NULL)
-                break;
-        }
-    }
-    return getActorPicked;
-}
-
-void vtkHoverCallback::defineSearchThresholdBoxForPickedObjectNearCursor(
-    const int x, const int y, int& xMin, int& xMax, int& yMin, int& yMax)
-{
-    const int thresholdSize_pixel = 2;
-    int* winSize = mRenderWindow->GetSize();
-  
-    xMin = x - thresholdSize_pixel;
-    if( xMin < 0 )  xMin = 0;
-    xMax = x + thresholdSize_pixel;
-    if( xMax > winSize[0] )  xMax = winSize[0];
-    yMin = y - thresholdSize_pixel;
-    if( yMin < 0 )  yMin = 0;
-    yMax = y + thresholdSize_pixel;
-    if( yMax > winSize[1] )  yMax = winSize[1];
 }
 
 void vtkHoverCallback::resetAllBoxColors(void)
