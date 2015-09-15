@@ -31,37 +31,136 @@
 #include <string>
 #include "mouse_interact.hpp"
 #include <vector>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <cstring>
 
 vtkStandardNewMacro(MouseInteractorStyle2);
 
-std::string createDescription(int boxNum, int size[], double origin[])
+struct VolumePacket
 {
-  char tmpString[50];
+    std::string filename;
+    float origin[3];
+    float xyResolution[2];
+    float zSlices;
+    float sliceThickness;
+};
+
+std::string createDescription(int boxNum, float xySize[2], float zSlices,
+                              float sliceThickness, float origin[3])
+{
+  char tmpString[100];
 
   std::string description = "Volume ";
   sprintf(tmpString, "%2d", boxNum);
   description.append(tmpString);
   description += " of size (";
-  sprintf(tmpString, "%d,%d,%d", size[0], size[1], size[2]);
+  sprintf(tmpString, "%5.1f,%5.1f,%5.1f", (float)xySize[0], (float)xySize[1], (zSlices * sliceThickness));
   description.append(tmpString);
   description += ") at (";
-  sprintf(tmpString, "%d,%d,%d", (int)origin[0], (int)origin[1],
-          (int)origin[2]);
+  sprintf(tmpString, "%5.1f,%5.1f,%5.1f", origin[0], origin[1], origin[2]);
+  //sprintf(tmpString, "%d,%d,%d", (int)origin[0], (int)origin[1], (int)origin[2]);
   description.append(tmpString);
   description += ")";
 
   return description;
 }
 
+int readVolumesDescriptionFile(std::vector<VolumePacket>& volData)
+{
+    const std::string filename = "load_volumes.txt";
+    std::ifstream file(filename);
+    std::string line;
+    std::string tmpString;
+    int numEntriesInVolumeFile = 0;
+    int totalLinesRead = 0;
+    VolumePacket tmpVol;
+
+    if( file.good() )
+    {
+        enum FileReadState {
+            getHeader = 0,
+            getFile,
+            getOrigin,
+            getXYresolution,
+            getSlices,
+            getSliceThickness,
+            numLinesPerVolume /*LEAVE THIS AT END*/
+        };
+        FileReadState fileState;
+
+        while(std::getline(file, line))
+        {
+            std::stringstream linestream(line);
+
+            switch (fileState)
+            {
+                case getHeader:
+                    std::getline(linestream, tmpString, '\n');
+                    if( tmpString.compare("VOLUME") != 0 )
+                        return -1;
+                    fileState = getFile;
+                    break;
+
+                case getFile:
+                    std::getline(linestream, tmpString, '\n');
+                    tmpVol.filename = tmpString;
+                    fileState = getOrigin;
+                    break;
+
+                case getOrigin:
+                    std::getline(linestream, tmpString, ' ');
+                    tmpVol.origin[0] = strtof(tmpString.c_str(), NULL);
+                    std::getline(linestream, tmpString, ' ');
+                    tmpVol.origin[1] = strtof(tmpString.c_str(), NULL);
+                    std::getline(linestream, tmpString, '\n');
+                    tmpVol.origin[2] = strtof(tmpString.c_str(), NULL);
+                    fileState = getXYresolution;
+                    break;
+
+                case getXYresolution:
+                    std::getline(linestream, tmpString, ' ');
+                    tmpVol.xyResolution[0] = strtof(tmpString.c_str(), NULL);
+                    std::getline(linestream, tmpString, '\n');
+                    tmpVol.xyResolution[1] = strtof(tmpString.c_str(), NULL);
+                    fileState = getSlices;
+                    break;
+
+                case getSlices:
+                    std::getline(linestream, tmpString, '\n');
+                    tmpVol.zSlices = strtof(tmpString.c_str(), NULL);
+                    fileState = getSliceThickness;
+                    break;
+
+                case getSliceThickness:
+                    std::getline(linestream, tmpString, '\n');
+                    tmpVol.sliceThickness = strtof(tmpString.c_str(), NULL);
+                    fileState = getHeader;
+                    volData.push_back(tmpVol);
+                    numEntriesInVolumeFile++;
+                    break;
+
+                default:
+                    break;
+            }
+            totalLinesRead++;
+        }
+        if( totalLinesRead%numLinesPerVolume != 0 || totalLinesRead == 0 )
+        {
+            throw std::string("Error in reading volume file.");
+        }
+    }
+    else
+    {
+        throw std::string("Cannot open file for approved drives list.");
+    }
+    return numEntriesInVolumeFile;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 int main (int argc, char *argv[])
 {
-/*  if (argc < 2)
-  {
-    cout << "Usage: " << argv[0] << " path/to/data" << endl;
-    return EXIT_FAILURE;
-  }*/
-
   // Create the renderer, the render window, and the interactor. The
   // renderer draws into the render window, the interactor enables
   // mouse- and keyboard-based interaction with the data within the
@@ -82,15 +181,17 @@ int main (int argc, char *argv[])
 
   //Use vtkVolume16Reader object but no image data will be contained for this
   // demo; just create it and set data dimensions for size of the outline
-  int numBoxes = 4;
-  int boxSize[4][3] = { {1500, 1000, 500},
-                        {40,   1200, 1000},
-                        {200,   150, 100},
-                        { 40,    40,  40} };
-  double boxOrigin[4][3] = { {0, 0, 0},
-                             {100, 200, 100},
-                             {550, 150, 50},
-                             {1200, 800, 400} };
+  int numBoxes = 0;
+  std::vector<VolumePacket> volumeData;
+  try {
+    numBoxes = readVolumesDescriptionFile(volumeData);
+  } catch (std::string& e) {
+    std::cerr << e << std::endl;
+    return -1;
+  }
+
+  std::vector<std::vector<int>> boxSize;
+  std::vector<std::vector<double>> boxOrigin;
   std::vector<std::string> boxDescription(4);
   std::vector<vtkActor*> boxActorPointer(4);
 
@@ -102,12 +203,16 @@ int main (int argc, char *argv[])
   for (int i = 0; i < numBoxes; ++i)
   {
     box[i] = vtkSmartPointer<vtkVolume16Reader>::New();
-    box[i]->SetDataDimensions(boxSize[i][0],boxSize[i][1]);
-    box[i]->SetImageRange(1, boxSize[i][2]);
-    box[i]->SetDataOrigin(boxOrigin[i]);
+    box[i]->SetDataDimensions(volumeData[i].xyResolution[0],
+                              volumeData[i].xyResolution[1]);
+    box[i]->SetImageRange(1, volumeData[i].zSlices * volumeData[i].sliceThickness);
+    box[i]->SetDataOrigin(volumeData[i].origin[0],
+                          volumeData[i].origin[1], volumeData[i].origin[2]);
     box[i]->Update();
 
-    boxDescription[i] = createDescription(i, boxSize[i], boxOrigin[i]);
+    boxDescription[i] = createDescription(i, volumeData[i].xyResolution,
+        volumeData[i].zSlices, volumeData[i].sliceThickness,
+        volumeData[i].origin);
 
     outlineData[i] = vtkSmartPointer<vtkOutlineFilter>::New();
     outlineData[i]->SetInputConnection(box[i]->GetOutputPort());
