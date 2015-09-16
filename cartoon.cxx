@@ -88,7 +88,7 @@ int readVolumesDescriptionFile(std::vector<VolumePacket>& volData)
             getSliceThickness,
             numLinesPerVolume /*LEAVE THIS AT END*/
         };
-        FileReadState fileState;
+        FileReadState fileState = getHeader;
 
         while(std::getline(file, line))
         {
@@ -99,7 +99,11 @@ int readVolumesDescriptionFile(std::vector<VolumePacket>& volData)
                 case getHeader:
                     std::getline(linestream, tmpString, '\n');
                     if( tmpString.compare("VOLUME") != 0 )
-                        return -1;
+                    {
+                        std::string msg = "VOLUME header not found on line ";
+                        msg += std::to_string(totalLinesRead);
+                        throw std::string(msg);
+                    }
                     fileState = getFile;
                     break;
 
@@ -158,6 +162,8 @@ int readVolumesDescriptionFile(std::vector<VolumePacket>& volData)
     return numEntriesInVolumeFile;
 }
 
+
+
 ///////////////////////////////////////////////////////////////////////////////
 int main (int argc, char *argv[])
 {
@@ -190,10 +196,8 @@ int main (int argc, char *argv[])
     return -1;
   }
 
-  std::vector<std::vector<int>> boxSize;
-  std::vector<std::vector<double>> boxOrigin;
-  std::vector<std::string> boxDescription(4);
-  std::vector<vtkActor*> boxActorPointer(4);
+  std::vector<std::string> boxDescription(numBoxes);
+  std::vector<vtkActor*> boxActorPointer(numBoxes);
 
   std::vector <vtkSmartPointer<vtkVolume16Reader> > box(numBoxes);
   std::vector <vtkSmartPointer<vtkOutlineFilter> > outlineData(numBoxes);
