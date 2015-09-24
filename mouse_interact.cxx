@@ -15,7 +15,8 @@
 
 
 static void defineSearchThresholdBoxForPickedObjectNearCursor(
-    const int x, const int y, int& xMin, int& xMax, int& yMin, int& yMax, int* winSize)
+    const int x, const int y, int& xMin, int& xMax,
+    int& yMin, int& yMax, int* winSize)
 {
     const int thresholdSize_pixel = 2;
   
@@ -36,10 +37,12 @@ static vtkActor* findPickedActorWithinWiderThreshold(
     int xMin, xMax, yMin, yMax;
   
     vtkActor* getActorPicked = NULL;
-    defineSearchThresholdBoxForPickedObjectNearCursor(x, y, xMin, xMax, yMin, yMax,
-        renWin->GetSize());
-    //Loop through the larger x/y range to see if any objects are "picked" nearby,
-    // this way it will pick without the cursor needing to be right on top of the object
+    defineSearchThresholdBoxForPickedObjectNearCursor(x, y, xMin, xMax,
+                                                      yMin, yMax,
+                                                      renWin->GetSize());
+    //Loop through the larger x/y range to see if any objects are "picked"
+    // nearby, this way it will pick without the cursor needing to be right
+    // on top of the object
     for (int i = xMin; i <= xMax; ++i)
     {
         for (int j = yMin; j <= yMax; ++j)
@@ -75,6 +78,11 @@ void MouseInteractorStyle2::OnLeftButtonDown()
       {
         mPointerValues[j]->GetProperty()->SetColor(1,1,1);
         std::cout << "Selected " << mDescriptions[j] << "." << std::endl;
+        if( mClickCallback != NULL && mFilename[j].length() != 0 )
+        {
+          std::cout << "Opening " << mFilename[j] << " in Seg3D." << std::endl;
+          mClickCallback(mFilename[j]);
+        }
       }
     }
 #endif //ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS 
@@ -104,6 +112,12 @@ void MouseInteractorStyle2::setObjectPointerValues(
     mPointerValues = pointerValues;
 }
 
+void MouseInteractorStyle2::setCallbackForClickOnObject(
+    int(*callback)(std::string))
+{
+    mClickCallback = callback;
+}
+
 void MouseInteractorStyle2::resetAllBoxColors(void)
 {
     for (auto it = mPointerValues.begin(); it != mPointerValues.end(); ++it)
@@ -127,8 +141,9 @@ void vtkHoverCallback::Execute(vtkObject*, unsigned long event,
             // Pick from this location.
             vtkSmartPointer<vtkPropPicker>  picker =
               vtkSmartPointer<vtkPropPicker>::New();
-            vtkActor* getActorPicked = findPickedActorWithinWiderThreshold(picker,
-                mRenderWindow, mRenderer, x, y);
+            vtkActor* getActorPicked
+                = findPickedActorWithinWiderThreshold(picker, mRenderWindow,
+                                                      mRenderer, x, y);
             for (int j = 0; j < mPointerValues.size(); ++j)
             {
                 if( getActorPicked == mPointerValues[j] )
@@ -145,7 +160,7 @@ void vtkHoverCallback::Execute(vtkObject*, unsigned long event,
     
       case vtkCommand::EndInteractionEvent:
           resetAllBoxColors();
-          mRenderWindowInteractor->Render(); //force render so color highlight shows
+          mRenderWindowInteractor->Render(); //force render so highlight shows
           break;
     }
 }

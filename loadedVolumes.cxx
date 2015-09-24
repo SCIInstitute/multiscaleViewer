@@ -7,7 +7,7 @@
 #include "loadedVolumes.hpp"
 
 loadedVolumes::loadedVolumes(std::string sourceFilename) :
-    mNumVolumes(0), mFilename(sourceFilename)
+    mNumVolumes(0), mSourceFilename(sourceFilename)
 {
     readVolumesDescriptionFile();
 }
@@ -16,7 +16,7 @@ loadedVolumes::~loadedVolumes(void) {}
 
 size_t loadedVolumes::readVolumesDescriptionFile(void)
 {
-    std::ifstream file(mFilename);
+    std::ifstream file(mSourceFilename);
     std::string line;
     std::string tmpString;
     int totalLinesRead = 0;
@@ -44,7 +44,7 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
 
                 case parseFile:
                     std::getline(linestream, tmpString, '\n');
-                    mFilename = tmpString;
+                    mVolFilename.push_back(tmpString);
                     fileState = parseOrigin;
                     break;
 

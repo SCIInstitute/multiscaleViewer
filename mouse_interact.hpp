@@ -27,17 +27,23 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
     virtual void OnLeftButtonDown(void);
     virtual void setObjectDescriptions(
         const std::vector<std::string>& descriptions);
+    virtual void setObjectFilenames(
+        const std::vector<std::string>& filenames)
+        { mFilename = filenames; }
     virtual void setObjectPointerValues(std::vector<vtkActor*>& pointerValues);
     virtual void setRenderer(vtkRenderer* aRender);
     virtual void setWindowRenderer(vtkRenderWindow* wRender);
+    virtual void setCallbackForClickOnObject(int(*callback)(std::string));
  
   private:
     std::vector<std::string> mDescriptions;
+    std::vector<std::string> mFilename;
     std::vector<vtkActor*> mPointerValues;
     void resetAllBoxColors(void);
 
     vtkRenderer* mRenderer;
     vtkRenderWindow* mRenderWindow;
+    int(*mClickCallback)(std::string) = NULL;
 };
 
 

@@ -31,14 +31,17 @@
 #include <string>
 #include "mouse_interact.hpp"
 #include "loadedVolumes.hpp"
+#include "PracticalSocket.h"
+#include <iostream>
 #include <vector>
-//#include <iostream>
 //#include <sstream>
 //#include <fstream>
 #include <cstring>
+#include <cstdlib>
+
+int sendToSeg3D_openVolumeCommand(std::string filename);
 
 vtkStandardNewMacro(MouseInteractorStyle2);
-
 
 std::string createDescription(int boxNum, std::array<float, 2> xySize,
                               float zSlices, float sliceThickness,
@@ -119,7 +122,8 @@ void setupCamera(vtkCamera* cam)
 
 void setupMouseControls(vtkHoverWidget* hoverWidget,
                         vtkRenderer* aRenderer,
-                        std::vector<std::string> boxDescription,
+                        std::vector<std::string>& boxDescription,
+                        std::vector<std::string>& boxFilename,
                         std::vector<vtkActor*> boxActorPointer,
                         vtkRenderWindow* renWin,
                         vtkRenderWindowInteractor* iren,
@@ -128,9 +132,11 @@ void setupMouseControls(vtkHoverWidget* hoverWidget,
 {
   style2->SetDefaultRenderer(aRenderer);
   style2->setObjectDescriptions(boxDescription);
+  style2->setObjectFilenames(boxFilename);
   style2->setObjectPointerValues(boxActorPointer);
   style2->setRenderer(aRenderer);
   style2->setWindowRenderer(renWin);
+  style2->setCallbackForClickOnObject(sendToSeg3D_openVolumeCommand);
   iren->SetInteractorStyle(style2);
 
   hoverWidget->SetInteractor(iren);
@@ -145,13 +151,42 @@ void setupMouseControls(vtkHoverWidget* hoverWidget,
   hoverCallback->setObjectPointerValues(boxActorPointer);
 }
 
-int setupVtkEnvironment(void)
+void doStepsToInitializeViewerBeforeStartingVtk(vtkRenderer* renderer,
+                                                vtkRenderWindow* renWin,
+                                                vtkCamera* cam)
 {
-  // Create the renderer, the render window, and the interactor. The
-  // renderer draws into the render window, the interactor enables
-  // mouse- and keyboard-based interaction with the data within the
-  // render window.
-  //
+    // An initial camera view is created.  The Dolly() method moves
+    // the camera towards the FocalPoint, thereby enlarging the image.
+    renderer->SetActiveCamera(cam);
+  
+    // Calling Render() directly on a vtkRenderer is strictly forbidden.
+    // Only calling Render() on the vtkRenderWindow is a valid call.
+    renWin->Render();
+
+    renderer->ResetCamera();
+    cam->Dolly(1.5);
+  
+    // Note that when camera movement occurs (as it does in the Dolly()
+    // method), the clipping planes often need adjusting. Clipping planes
+    // consist of two planes: near and far along the view direction. The
+    // near plane clips out objects in front of the plane; the far plane
+    // clips out objects behind the plane. This way only what is drawn
+    // between the planes is actually rendered.
+    renderer->ResetCameraClippingRange();
+}
+
+void addAllActorsToRenderer(unsigned int num, vtkRenderer* renderer,
+                            std::vector<vtkSmartPointer<vtkActor> >& actor)
+{
+  // Actors are added to the renderer.
+  for (unsigned int i = 0; i < num; ++i)
+  {
+    renderer->AddActor(actor[i]);
+  }
+}
+
+int setupAndRunVtkEnvironment(void)
+{
   vtkSmartPointer<vtkRenderer> aRenderer = vtkSmartPointer<vtkRenderer>::New();
   vtkSmartPointer<vtkRenderWindow> renWin =
     vtkSmartPointer<vtkRenderWindow>::New();
@@ -171,6 +206,7 @@ int setupVtkEnvironment(void)
     numBoxes = volumeData.getNumLoadedVolumes();
 
     std::vector<std::string> boxDescription(numBoxes);
+    std::vector<std::string> boxFilename(numBoxes);
     std::vector<vtkActor*> boxActorPointer(numBoxes);
     std::vector<vtkSmartPointer<vtkVolume16Reader> > box(numBoxes);
     std::vector<vtkSmartPointer<vtkOutlineFilter> > outlineData(numBoxes);
@@ -186,6 +222,7 @@ int setupVtkEnvironment(void)
 
       setDetailsForEachVolumeAsSpecifiedInFile(box[i], &volumeData, i,
                                                boxDescription[i]);
+      boxFilename[i] = volumeData.getVolFilenames(i);
       setupOutlineFilterForSpecificVolume(outlineData[i], box[i]);
       setupPolyDataMapperForSpecificVolume(mapOutline[i], outlineData[i]); 
       setupActorForSpecificVolume(outline[i], mapOutline[i]);
@@ -193,10 +230,6 @@ int setupVtkEnvironment(void)
       std::cout << "Created outline " << i << " with address: " << outline[i];
       std::cout << std::endl;
     }
-    // It is convenient to create an initial view of the data. The
-    // FocalPoint and Position form a vector direction. Later on
-    // (ResetCamera() method) this vector is used to position the camera
-    // to look at the data in this direction.
     vtkSmartPointer<vtkCamera> aCamera =
       vtkSmartPointer<vtkCamera>::New();
     setupCamera(aCamera);
@@ -209,34 +242,11 @@ int setupVtkEnvironment(void)
     // Create a callback to listen to the widget's two VTK events
     vtkSmartPointer<vtkHoverCallback> hoverCallback =
       vtkSmartPointer<vtkHoverCallback>::New();
-
-    setupMouseControls(hoverWidget, aRenderer, boxDescription,
+    setupMouseControls(hoverWidget, aRenderer, boxDescription, boxFilename,
                        boxActorPointer, renWin, iren, hoverCallback, style2);
 
-    // Actors are added to the renderer.
-    for (int i = 0; i < numBoxes; ++i)
-    {
-      aRenderer->AddActor(outline[i]);
-    }
-  
-    // An initial camera view is created.  The Dolly() method moves
-    // the camera towards the FocalPoint, thereby enlarging the image.
-    aRenderer->SetActiveCamera(aCamera);
-  
-    // Calling Render() directly on a vtkRenderer is strictly forbidden.
-    // Only calling Render() on the vtkRenderWindow is a valid call.
-    renWin->Render();
-
-    aRenderer->ResetCamera();
-    aCamera->Dolly(1.5);
-  
-    // Note that when camera movement occurs (as it does in the Dolly()
-    // method), the clipping planes often need adjusting. Clipping planes
-    // consist of two planes: near and far along the view direction. The
-    // near plane clips out objects in front of the plane; the far plane
-    // clips out objects behind the plane. This way only what is drawn
-    // between the planes is actually rendered.
-    aRenderer->ResetCameraClippingRange();
+    addAllActorsToRenderer(numBoxes, aRenderer, outline); 
+    doStepsToInitializeViewerBeforeStartingVtk(aRenderer, renWin, aCamera);
   
     // interact with data
     iren->Initialize();
@@ -249,10 +259,29 @@ int setupVtkEnvironment(void)
   return 0;
 }
 
+int sendSocketCommandToSeg3D(std::string command)
+{
+  try {
+    TCPSocket sock("localhost", 9999);
+    sock.send(command.c_str(), command.length());
+  } catch(SocketException &e) {
+    std::cerr << e.what() << endl;
+    return 1;
+  }
+  return 0;
+}
+
+int sendToSeg3D_openVolumeCommand(std::string filename)
+{
+  std::string cmd = "importlayer(filename=\"" + filename + "\", ";
+  cmd += "importer=\"[Teem Importer]\")\r\n";
+  return (sendSocketCommandToSeg3D(cmd));
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 int main (int argc, char *argv[])
 {
-  setupVtkEnvironment();
+  setupAndRunVtkEnvironment();
 
   return EXIT_SUCCESS;
 }
