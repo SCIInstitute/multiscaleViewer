@@ -1,5 +1,5 @@
 VOLUME
-../nano_data/Polson3319/vtkNrrd_10
+/Users/gpayne/multiscale_viewer/nano_data/183_246_shrink0.nrrd
 0 0 0
 1536 1024
 20
