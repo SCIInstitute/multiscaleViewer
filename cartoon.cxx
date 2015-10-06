@@ -40,6 +40,7 @@
 #include <cstdlib>
 
 int sendToSeg3D_openVolumeCommand(std::string filename);
+int sendToSeg3D_openFileSeriesCommand(std::vector<std::string> filenames);
 
 vtkStandardNewMacro(MouseInteractorStyle2);
 
@@ -276,6 +277,21 @@ int sendToSeg3D_openVolumeCommand(std::string filename)
   std::string cmd = "importlayer(filename=\"" + filename + "\", ";
   cmd += "importer=\"[Teem Importer]\")\r\n";
   return (sendSocketCommandToSeg3D(cmd));
+}
+
+int sendToSeg3D_openFileSeriesCommand(std::vector<std::string> filenames)
+{
+  std::string cmdPfx, cmdFiles, cmdSfx;
+  cmdPfx  = "importSeries filenames='[";
+
+  for (auto & element : filenames)
+    cmdFiles += "[" + element + "],";
+  cmdFiles = cmdFiles.substr(0, cmdFiles.size() - 1);
+
+  cmdSfx  = "]' importer='[ITK FileSeries Importer]' ";
+  cmdSfx += "mode='data' inputfiles_id='-1'";
+  cmdSfx += "\r\n";
+  return (sendSocketCommandToSeg3D(cmdPfx + cmdFiles + cmdSfx));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
