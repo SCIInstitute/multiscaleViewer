@@ -208,6 +208,7 @@ int setupAndRunVtkEnvironment(void)
 
     std::vector<std::string> boxDescription(numBoxes);
     std::vector<std::string> boxFilename(numBoxes);
+    std::vector<std::vector<std::string> > boxImageSeriesFilenames(numBoxes);
     std::vector<vtkActor*> boxActorPointer(numBoxes);
     std::vector<vtkSmartPointer<vtkVolume16Reader> > box(numBoxes);
     std::vector<vtkSmartPointer<vtkOutlineFilter> > outlineData(numBoxes);

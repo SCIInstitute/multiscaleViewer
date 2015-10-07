@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <cstring>
 #include <array>
 #include <iostream>
 #include <fstream>
@@ -14,12 +15,43 @@ loadedVolumes::loadedVolumes(std::string sourceFilename) :
 
 loadedVolumes::~loadedVolumes(void) {}
 
+void loadedVolumes::populateImageSeriesListFromFileFilterString(
+    std::string filter, std::vector<std::string>& fileList)
+{
+	char tmpBuff[MAX_SINGLE_FILENAME_SIZE];
+	std::string listingCmd = "ls -1 " + filter;
+    FILE* stream = popen(listingCmd.c_str(), "r");
+    if( stream ) {
+    	fileList.clear();
+        while( ! feof(stream) ) {
+            if( fgets(tmpBuff, MAX_SINGLE_FILENAME_SIZE, stream) != NULL ) {
+                std::string tmpString = removeNewlineAndConvertToString(tmpBuff);
+                fileList.push_back(tmpString);
+            }
+        }
+        pclose(stream);
+    } else {
+        throw std::string("Cannot open pipe to get image series listing.");
+    }
+
+}
+
+std::string loadedVolumes::removeNewlineAndConvertToString(char* buffer)
+{
+    size_t ln = strlen(buffer) - 1;
+    if( buffer[ln] == '\n' )
+        buffer[ln] = '\0';
+    std::string tmpString = buffer;
+    return tmpString;
+}
+
 size_t loadedVolumes::readVolumesDescriptionFile(void)
 {
     std::ifstream file(mSourceFilename);
     std::string line;
     std::string tmpString;
     int totalLinesRead = 0;
+    std::size_t found;
 
     if( file.good() )
     {
@@ -44,7 +76,22 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
 
                 case parseFile:
                     std::getline(linestream, tmpString, '\n');
-                    mVolFilename.push_back(tmpString);
+                    found = tmpString.find('*');
+                    if( found != std::string::npos )
+                    {
+                        mIsImageSeries = true;
+                        try {
+                            populateImageSeriesListFromFileFilterString(
+                                tmpString, mImageSeriesFilenames[mNumVolumes]);
+                        } catch(std::string &e) {
+                          std::cerr << e << std::endl;
+                        }
+                    }
+                    else
+                    {
+                    	mIsImageSeries = false;
+                        mVolFilename.push_back(tmpString);
+                    }
                     fileState = parseOrigin;
                     break;
 
