@@ -122,22 +122,25 @@ void setupCamera(vtkCamera* cam)
 }
 
 void setupMouseControls(vtkHoverWidget* hoverWidget,
-                        vtkRenderer* aRenderer,
-                        std::vector<std::string>& boxDescription,
-                        std::vector<std::string>& boxFilename,
-                        std::vector<vtkActor*> boxActorPointer,
-                        vtkRenderWindow* renWin,
-                        vtkRenderWindowInteractor* iren,
-                        vtkHoverCallback* hoverCallback,
-                        MouseInteractorStyle2* style2)
+    vtkRenderer* aRenderer,
+    std::vector<std::string>& boxDescription,
+    std::vector<std::string>& boxFilename,
+    std::vector<std::vector<std::string> >& imageSeriesFilenames,
+    std::vector<vtkActor*> boxActorPointer,
+    vtkRenderWindow* renWin,
+    vtkRenderWindowInteractor* iren,
+    vtkHoverCallback* hoverCallback,
+    MouseInteractorStyle2* style2)
 {
   style2->SetDefaultRenderer(aRenderer);
   style2->setObjectDescriptions(boxDescription);
   style2->setObjectFilenames(boxFilename);
+  style2->setObjectImageSeriesFilenames(imageSeriesFilenames);
   style2->setObjectPointerValues(boxActorPointer);
   style2->setRenderer(aRenderer);
   style2->setWindowRenderer(renWin);
-  style2->setCallbackForClickOnObject(sendToSeg3D_openVolumeCommand);
+  style2->setCallbacksForClickOnObject(sendToSeg3D_openVolumeCommand,
+                                      sendToSeg3D_openFileSeriesCommand);
   iren->SetInteractorStyle(style2);
 
   hoverWidget->SetInteractor(iren);
@@ -225,6 +228,7 @@ int setupAndRunVtkEnvironment(void)
       setDetailsForEachVolumeAsSpecifiedInFile(box[i], &volumeData, i,
                                                boxDescription[i]);
       boxFilename[i] = volumeData.getVolFilenames(i);
+      boxImageSeriesFilenames[i] = volumeData.getImageSeriesListing(i);
       setupOutlineFilterForSpecificVolume(outlineData[i], box[i]);
       setupPolyDataMapperForSpecificVolume(mapOutline[i], outlineData[i]); 
       setupActorForSpecificVolume(outline[i], mapOutline[i]);
@@ -245,7 +249,8 @@ int setupAndRunVtkEnvironment(void)
     vtkSmartPointer<vtkHoverCallback> hoverCallback =
       vtkSmartPointer<vtkHoverCallback>::New();
     setupMouseControls(hoverWidget, aRenderer, boxDescription, boxFilename,
-                       boxActorPointer, renWin, iren, hoverCallback, style2);
+    		           boxImageSeriesFilenames, boxActorPointer, renWin, iren,
+    		           hoverCallback, style2);
 
     addAllActorsToRenderer(numBoxes, aRenderer, outline); 
     doStepsToInitializeViewerBeforeStartingVtk(aRenderer, renWin, aCamera);

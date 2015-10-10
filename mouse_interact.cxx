@@ -80,7 +80,7 @@ void MouseInteractorStyle2::OnLeftButtonDown()
         std::cout << "Selected " << mDescriptions[j] << "." << std::endl;
         if( mClickCallback != NULL && mFilename[j].length() != 0 )
         {
-          std::cout << "Opening " << mFilename[j] << " in Seg3D." << std::endl;
+          std::cout << "Opening image: " << mFilename[j] << " in Seg3D." << std::endl;
           mClickCallback(mFilename[j]);
         }
       }
@@ -112,10 +112,12 @@ void MouseInteractorStyle2::setObjectPointerValues(
     mPointerValues = pointerValues;
 }
 
-void MouseInteractorStyle2::setCallbackForClickOnObject(
-    int(*callback)(std::string))
+void MouseInteractorStyle2::setCallbacksForClickOnObject(
+    int(*callbackImg)(std::string),
+    int(*callbackSeries)(std::vector<std::string>&)             )
 {
-    mClickCallback = callback;
+    mClickCallbackSingleImage = callbackImg;
+    mClickCallbackImageSeries = callbackSeries;
 }
 
 void MouseInteractorStyle2::resetAllBoxColors(void)

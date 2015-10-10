@@ -28,12 +28,14 @@ public:
         const { return mIsImageSeries; }
     const size_t getNumImagesInSeries(size_t idx)
         const { return mImageSeriesFilenames[idx].size(); }
+    const std::vector<std::string>& getImageSeriesListing(size_t idx)
+        const { return mImageSeriesFilenames[idx]; }
 
 private:
     size_t readVolumesDescriptionFile(void);
     std::string removeNewlineAndConvertToString(char* buffer);
     void populateImageSeriesListFromFileFilterString(std::string filter,
-        std::vector<std::string>& fileList);
+        size_t indexIntoListsOfFiles);
 
     size_t mNumVolumes;
     std::string mSourceFilename;
@@ -43,7 +45,8 @@ private:
     std::vector<std::array<float, 2> > mXYresolution;
     std::vector<float> mZslices;
     std::vector<float> mSliceThickness;
-    bool mIsImageSeries = false;
+    std::vector<bool> mIsImageSeries;
+
     enum FileReadState {
         parseHeader = 0,
         parseFile,
