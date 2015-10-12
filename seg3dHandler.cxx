@@ -5,14 +5,13 @@
 #include "PracticalSocket.h"
 #include "seg3dHandler.hpp"
 
-//#define SOCKET_BYPASS_TEST
+#define SOCKET_VERBOSE_TEST
 
 int seg3dHandler::sendSocketCommandToSeg3D(std::string command)
 {
-#ifdef SOCKET_BYPASS_TEST
+#ifdef SOCKET_VERBOSE_TEST
     std::cout << "SOCKET_SEND: " << command << std::endl;
-    return 0;
-#else
+#endif
     try {
       TCPSocket sock(mHost, mPort);
       sock.send(command.c_str(), command.length());
@@ -21,7 +20,6 @@ int seg3dHandler::sendSocketCommandToSeg3D(std::string command)
       return 1;
     }
     return 0;
-#endif
 }
 
 int seg3dHandler::sendToSeg3D_openVolumeCommand(std::string filename)
