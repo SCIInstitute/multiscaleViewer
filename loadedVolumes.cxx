@@ -13,7 +13,20 @@ loadedVolumes::loadedVolumes(std::string sourceFilename) :
     readVolumesDescriptionFile();
 }
 
+loadedVolumes::loadedVolumes(const loadedVolumes& src)
+{
+	copyFrom(src);
+}
+
 loadedVolumes::~loadedVolumes(void) {}
+
+loadedVolumes& loadedVolumes::operator=(const loadedVolumes& rhs)
+{
+	if( &rhs == this )
+		return *this;
+    copyFrom(rhs);
+    return *this;
+}
 
 void loadedVolumes::populateImageSeriesListFromFileFilterString(
     std::string filter, size_t indexIntoListsOfFiles)
@@ -94,14 +107,20 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
                         } catch(std::string &e) {
                           std::cerr << e << std::endl;
                         }
+std::cout << "Image series";
                     }
                     else
                     {
                     	mIsImageSeries[mNumVolumes] = false;
                     	mImageSeriesFilenames[mNumVolumes].push_back(tmpString);
+std::cout << "Single volume";
                     }
                     mVolFilename.push_back(tmpString);
                     fileState = parseOrigin;
+std::cout << "(" << mVolFilename[mNumVolumes] << " / ";
+for (auto& element : mImageSeriesFilenames[mNumVolumes])
+	std::cout << element << " ";
+std::cout << ") at index " << mNumVolumes << "." << std::endl;
                     break;
 
                 case parseOrigin:
@@ -154,4 +173,17 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
         throw std::string("Cannot open file for approved drives list.");
     }
     return mNumVolumes;
+}
+
+void loadedVolumes::copyFrom(const loadedVolumes& src)
+{
+    mNumVolumes = src.mNumVolumes;
+    mSourceFilename = src.mSourceFilename;
+    mVolFilename = src.mVolFilename;
+    mImageSeriesFilenames = src.mImageSeriesFilenames;
+    mOrigin = src.mOrigin;
+    mXYresolution = src.mXYresolution;
+    mZslices = src.mZslices;
+    mSliceThickness = src.mSliceThickness;
+    mIsImageSeries = src.mIsImageSeries;
 }

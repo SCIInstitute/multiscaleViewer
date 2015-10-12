@@ -11,7 +11,9 @@ class loadedVolumes
 {
 public:
     loadedVolumes(std::string sourceFilename);
+    loadedVolumes(const loadedVolumes& src);
     virtual ~loadedVolumes(void);
+    loadedVolumes& operator=(const loadedVolumes& rhs);
     const size_t getNumLoadedVolumes(void)
         const { return mNumVolumes; }
     const std::array<float, 3> getOrigin(size_t idx)
@@ -36,6 +38,7 @@ private:
     std::string removeNewlineAndConvertToString(char* buffer);
     void populateImageSeriesListFromFileFilterString(std::string filter,
         size_t indexIntoListsOfFiles);
+    virtual void copyFrom(const loadedVolumes& src);
 
     size_t mNumVolumes;
     std::string mSourceFilename;
