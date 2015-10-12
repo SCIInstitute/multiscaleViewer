@@ -34,14 +34,16 @@ void loadedVolumes::populateImageSeriesListFromFileFilterString(
 	char tmpBuff[MAX_SINGLE_FILENAME_SIZE];
 	std::string listingCmd = "ls -1 " + filter;
     FILE* stream = popen(listingCmd.c_str(), "r");
+    std::vector<std::string> tmpListing;
+
     if( stream ) {
-    	mImageSeriesFilenames[indexIntoListsOfFiles].clear();
         while( ! feof(stream) ) {
             if( fgets(tmpBuff, MAX_SINGLE_FILENAME_SIZE, stream) != NULL ) {
                 std::string tmpString = removeNewlineAndConvertToString(tmpBuff);
-                mImageSeriesFilenames[indexIntoListsOfFiles].push_back(tmpString);
+                tmpListing.push_back(tmpString);
             }
         }
+        mImageSeriesFilenames.push_back(tmpListing);
         pclose(stream);
     } else {
         throw std::string("Cannot open pipe to get image series listing.");
@@ -100,7 +102,7 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
                     std::getline(linestream, tmpString, '\n');
                     if( doesPathRepresentImageSeries(tmpString) )
                     {
-                        mIsImageSeries[mNumVolumes] = true;
+                        mIsImageSeries.push_back(true);
                         try {
                             populateImageSeriesListFromFileFilterString(
                                 tmpString, mNumVolumes);
@@ -111,8 +113,10 @@ std::cout << "Image series";
                     }
                     else
                     {
-                    	mIsImageSeries[mNumVolumes] = false;
-                    	mImageSeriesFilenames[mNumVolumes].push_back(tmpString);
+                    	mIsImageSeries.push_back(false);
+                    	std::vector<std::string> tmpV;
+                    	tmpV.push_back(tmpString);
+                    	mImageSeriesFilenames.push_back(tmpV);
 std::cout << "Single volume";
                     }
                     mVolFilename.push_back(tmpString);
