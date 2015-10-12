@@ -5,56 +5,56 @@ VOLUME
 5
 190.0
 VOLUME
-../nano_data/UnivUtah_Zeiss_LFOV/bin1/UnivUtah_Zeiss_LFOV_bin1_*.tiff
+../nano_data/UnivUtah_Zeiss_LFOV_bin1/UnivUtah_Zeiss_LFOV_bin1_*.tiff
 3725 13265 0
 11245 11469
 1120
 5.6
-VOLUME
-../nano_data/UnivUtah_Zeiss_LFOV/bin1/UnivUtah_Zeiss_LFOV_bin1_*.tiff
-18695 13265 0
-11245 11469
-1120
-5.6
-VOLUME
-../nano_data/UnivUtah_Zeiss_LFOV/bin1/UnivUtah_Zeiss_LFOV_bin1_*.tiff
-33665 13265 0
-11245 11469
-1120
-5.6
+#VOLUME
+#../nano_data/UnivUtah_Zeiss_LFOV_bin1/UnivUtah_Zeiss_LFOV_bin1_*.tiff
+#18695 13265 0
+#11245 11469
+#1120
+#5.6
+#VOLUME
+#../nano_data/UnivUtah_Zeiss_LFOV_bin1/UnivUtah_Zeiss_LFOV_bin1_*.tiff
+#33665 13265 0
+#11245 11469
+#1120
+#5.6
 VOLUME
 ../nano_data/Polson3319slices_registered/results_grid/Polsonshale*.png
 4725 17265 200
 240 150
 209
 0.02
-VOLUME
-../nano_data/Polson3319slices_registered/results_grid/Polsonshale*.png
-19245 17265 200
-240 150
-209
-0.02
-VOLUME
-../nano_data/Polson3319slices_registered/results_grid/Polsonshale*.png
-34215 17265 200
-240 150
-209
-0.02
+#VOLUME
+#../nano_data/Polson3319slices_registered/results_grid/Polsonshale*.png
+#19245 17265 200
+#240 150
+#209
+#0.02
+#VOLUME
+#../nano_data/Polson3319slices_registered/results_grid/Polsonshale*.png
+#34215 17265 200
+#240 150
+#209
+#0.02
 VOLUME
 ../nano_data/UnivUtah_Zeiss_HR/UnivUtah_Zeiss_HR_*.tiff
 9345 17200 1000
 787.2 808.8
 988
 0.8
-VOLUME
-../nano_data/UnivUtah_Zeiss_HR/UnivUtah_Zeiss_HR_*.tiff
-24315 17200 1000
-787.2 808.8
-988
-0.8
-VOLUME
-../nano_data/UnivUtah_Zeiss_HR/UnivUtah_Zeiss_HR_*.tiff
-39285 17200 1000
-787.2 808.8
-988
-0.8
+#VOLUME
+#../nano_data/UnivUtah_Zeiss_HR/UnivUtah_Zeiss_HR_*.tiff
+#24315 17200 1000
+#787.2 808.8
+#988
+#0.8
+#VOLUME
+#../nano_data/UnivUtah_Zeiss_HR/UnivUtah_Zeiss_HR_*.tiff
+#39285 17200 1000
+#787.2 808.8
+#988
+#0.8
