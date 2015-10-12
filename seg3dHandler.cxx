@@ -7,11 +7,11 @@
 
 //#define SOCKET_BYPASS_TEST
 
-
 int seg3dHandler::sendSocketCommandToSeg3D(std::string command)
 {
 #ifdef SOCKET_BYPASS_TEST
-	std::cout << "SOCKET_SEND: " << command << std::endl;
+    std::cout << "SOCKET_SEND: " << command << std::endl;
+    return 0;
 #else
     try {
       TCPSocket sock(mHost, mPort);
