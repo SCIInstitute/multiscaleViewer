@@ -1,6 +1,12 @@
 /*=========================================================================
-  Multiscale demo 01
-  Borrowed elements from VTK example Medical3.cxx
+  Cartoon visualization of all volumes represented in an input file.
+  Usage:
+    ./cartoon [path_offset]
+  Program will read a legend file in the same directory that contains details
+  of all the data volumes to be visualized (default name is load_volumes.txt).
+  See the loadedVolumes.h file for specifics on the format of this legend file.
+  The optional path_offset will be applied to all paths contained in the
+  legend file.
 =========================================================================*/
 #include <vtkObjectFactory.h>
 #include <vtkRenderer.h>

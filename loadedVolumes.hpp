@@ -1,6 +1,19 @@
 #ifndef __LOADED_VOLUMES__
 #define __LOADED_VOLUMES__
 
+/*
+ * The loadedVolumes class is used to read a legend file that by default is
+ * in the same directory as the app. This is an ASCII text file with one field
+ * per line, with 6 fields per volume:
+ *   1. Always the text "VOLUME"
+ *   2. Filename path. This may be a path to a specific volume .nrrd file, or
+ *      an 'ls' filter command that will select a series of files
+ *      (example: ../path/to/files/image_series*.jpg)
+ *   3. Origin in xyz coordinates (3 floating-point values separated by spaces)
+ *   4. Slice xy size (2 floating-point values separated by spaces)
+ *   5. Number of xy slices in the z direction to complete the volume
+ *   6. Spacing distance between slices in the z direction
+ */
 #include <string>
 #include <vector>
 #include <array>
