@@ -47,7 +47,7 @@ std::string loadedVolumes::removeNewlineAndConvertToString(char* buffer)
 
 bool doesPathRepresentImageSeries(std::string filePath)
 {
-    std::size_t found = tmpString.find('*');
+    std::size_t found = filePath.find('*');
     if( found != std::string::npos )
         return true;
     else
@@ -87,7 +87,7 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
                     std::getline(linestream, tmpString, '\n');
                     if( doesPathRepresentImageSeries(tmpString) )
                     {
-                        mIsImageSeries = true;
+                        mIsImageSeries[mNumVolumes] = true;
                         try {
                             populateImageSeriesListFromFileFilterString(
                                 tmpString, mNumVolumes);
@@ -97,8 +97,8 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
                     }
                     else
                     {
-                    	mIsImageSeries = false;
-                    	mImageSeriesFilenames(mNumVolumes).push_back(tmpString);
+                    	mIsImageSeries[mNumVolumes] = false;
+                    	mImageSeriesFilenames[mNumVolumes].push_back(tmpString);
                     }
                     mVolFilename.push_back(tmpString);
                     fileState = parseOrigin;

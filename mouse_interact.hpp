@@ -12,7 +12,7 @@
 #include <vtkActor.h>
 #include <vtkPropPicker.h>
 #include <vtkSmartPointer.h>
-
+#include "seg3dHandler.hpp"
 
 
 //ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS will highlight a volume bounding box
@@ -27,29 +27,20 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
     virtual void OnLeftButtonDown(void);
     virtual void setObjectDescriptions(
         const std::vector<std::string>& descriptions);
-    virtual void setObjectFilenames(
-        const std::vector<std::string>& filenames)
-        { mFilename = filenames; }
-    virtual void setObjectImageSeriesFilenames(
-        const std::vector<std::vector<std::string> >& imageSeriesFilenames)
-        { mImageSeriesFilenames = imageSeriesFilenames; }
     virtual void setObjectPointerValues(std::vector<vtkActor*>& pointerValues);
     virtual void setRenderer(vtkRenderer* aRender);
     virtual void setWindowRenderer(vtkRenderWindow* wRender);
-    virtual void setCallbacksForClickOnObject(int(*callbackImg)(std::string),
-        int(*callbackSeries)(std::vector<std::string>&));
+    virtual void setSeg3dHandler(seg3dHandler* seg3dH)
+        { mSeg3dHandle = seg3dH; }
  
   private:
     std::vector<std::string> mDescriptions;
-    std::vector<std::string> mFilename;
-    std::vector<std::vector<std::string> > mImageSeriesFilenames;
     std::vector<vtkActor*> mPointerValues;
     void resetAllBoxColors(void);
 
     vtkRenderer* mRenderer;
     vtkRenderWindow* mRenderWindow;
-    int(*mClickCallbackSingleImage)(std::string) = NULL;
-    int(*mClickCallbackImageSeries)(std::vector<std::string>&) = NULL;
+    seg3dHandler* mSeg3dHandle;
 };
 
 

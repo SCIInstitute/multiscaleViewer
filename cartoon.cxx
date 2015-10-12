@@ -31,13 +31,8 @@
 #include <string>
 #include "mouse_interact.hpp"
 #include "loadedVolumes.hpp"
-#include "PracticalSocket.h"
-#include <iostream>
-#include <vector>
-//#include <sstream>
-//#include <fstream>
-#include <cstring>
-#include <cstdlib>
+#include "seg3dHandler.hpp"
+
 
 int sendToSeg3D_openVolumeCommand(std::string filename);
 int sendToSeg3D_openFileSeriesCommand(std::vector<std::string> filenames);
@@ -124,9 +119,8 @@ void setupCamera(vtkCamera* cam)
 void setupMouseControls(vtkHoverWidget* hoverWidget,
     vtkRenderer* aRenderer,
     std::vector<std::string>& boxDescription,
-    std::vector<std::string>& boxFilename,
-    std::vector<std::vector<std::string> >& imageSeriesFilenames,
     std::vector<vtkActor*> boxActorPointer,
+    seg3dHandler* seg3dHandle,
     vtkRenderWindow* renWin,
     vtkRenderWindowInteractor* iren,
     vtkHoverCallback* hoverCallback,
@@ -134,13 +128,10 @@ void setupMouseControls(vtkHoverWidget* hoverWidget,
 {
   style2->SetDefaultRenderer(aRenderer);
   style2->setObjectDescriptions(boxDescription);
-  style2->setObjectFilenames(boxFilename);
-  style2->setObjectImageSeriesFilenames(imageSeriesFilenames);
   style2->setObjectPointerValues(boxActorPointer);
   style2->setRenderer(aRenderer);
   style2->setWindowRenderer(renWin);
-  style2->setCallbacksForClickOnObject(sendToSeg3D_openVolumeCommand,
-                                      sendToSeg3D_openFileSeriesCommand);
+  style2->setSeg3dHandler(seg3dHandle);
   iren->SetInteractorStyle(style2);
 
   hoverWidget->SetInteractor(iren);
@@ -209,6 +200,8 @@ int setupAndRunVtkEnvironment(void)
     loadedVolumes volumeData("load_volumes.txt");
     numBoxes = volumeData.getNumLoadedVolumes();
 
+    seg3dHandler seg3dHandle(&volumeData);
+
     std::vector<std::string> boxDescription(numBoxes);
     std::vector<std::string> boxFilename(numBoxes);
     std::vector<std::vector<std::string> > boxImageSeriesFilenames(numBoxes);
@@ -248,9 +241,8 @@ int setupAndRunVtkEnvironment(void)
     // Create a callback to listen to the widget's two VTK events
     vtkSmartPointer<vtkHoverCallback> hoverCallback =
       vtkSmartPointer<vtkHoverCallback>::New();
-    setupMouseControls(hoverWidget, aRenderer, boxDescription, boxFilename,
-    		           boxImageSeriesFilenames, boxActorPointer, renWin, iren,
-    		           hoverCallback, style2);
+    setupMouseControls(hoverWidget, aRenderer, boxDescription, boxActorPointer,
+    		           &seg3dHandle, renWin, iren, hoverCallback, style2);
 
     addAllActorsToRenderer(numBoxes, aRenderer, outline); 
     doStepsToInitializeViewerBeforeStartingVtk(aRenderer, renWin, aCamera);
@@ -266,44 +258,12 @@ int setupAndRunVtkEnvironment(void)
   return 0;
 }
 
-int sendSocketCommandToSeg3D(std::string command)
-{
-  try {
-    TCPSocket sock("localhost", 9999);
-    sock.send(command.c_str(), command.length());
-  } catch(SocketException &e) {
-    std::cerr << e.what() << endl;
-    return 1;
-  }
-  return 0;
-}
 
-int sendToSeg3D_openVolumeCommand(std::string filename)
-{
-  std::string cmd = "importlayer(filename=\"" + filename + "\", ";
-  cmd += "importer=\"[Teem Importer]\")\r\n";
-  return (sendSocketCommandToSeg3D(cmd));
-}
-
-int sendToSeg3D_openFileSeriesCommand(std::vector<std::string> filenames)
-{
-  std::string cmdPfx, cmdFiles, cmdSfx;
-  cmdPfx  = "importSeries filenames='[";
-
-  for (auto & element : filenames)
-    cmdFiles += "[" + element + "],";
-  cmdFiles = cmdFiles.substr(0, cmdFiles.size() - 1);
-
-  cmdSfx  = "]' importer='[ITK FileSeries Importer]' ";
-  cmdSfx += "mode='data' inputfiles_id='-1'";
-  cmdSfx += "\r\n";
-  return (sendSocketCommandToSeg3D(cmdPfx + cmdFiles + cmdSfx));
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 int main (int argc, char *argv[])
 {
   setupAndRunVtkEnvironment();
 
-  return EXIT_SUCCESS;
+  return 0;
 }

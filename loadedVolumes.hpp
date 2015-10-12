@@ -24,8 +24,8 @@ public:
         const { return mSliceThickness[idx]; }
     const std::string getVolFilenames(size_t idx)
         const { return mVolFilename[idx]; }
-    const bool isVolumeImageSeries(void)
-        const { return mIsImageSeries; }
+    const bool isVolumeImageSeries(size_t idx)
+        const { return mIsImageSeries[idx]; }
     const size_t getNumImagesInSeries(size_t idx)
         const { return mImageSeriesFilenames[idx].size(); }
     const std::vector<std::string>& getImageSeriesListing(size_t idx)

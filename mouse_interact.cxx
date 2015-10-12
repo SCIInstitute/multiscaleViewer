@@ -74,16 +74,12 @@ void MouseInteractorStyle2::OnLeftButtonDown()
     resetAllBoxColors();
     for (int j = 0; j < mPointerValues.size(); ++j)
     {
-      if( getActorPicked == mPointerValues[j] )
-      {
-        mPointerValues[j]->GetProperty()->SetColor(1,1,1);
-        std::cout << "Selected " << mDescriptions[j] << "." << std::endl;
-        if( mClickCallback != NULL && mFilename[j].length() != 0 )
+        if( getActorPicked == mPointerValues[j] )
         {
-          std::cout << "Opening image: " << mFilename[j] << " in Seg3D." << std::endl;
-          mClickCallback(mFilename[j]);
+            mPointerValues[j]->GetProperty()->SetColor(1,1,1);
+            std::cout << "Selected " << mDescriptions[j] << "." << std::endl;
+            mSeg3dHandle->objectClickedCallback(j);
         }
-      }
     }
 #endif //ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS 
     // Forward events (this forces a re-render)
@@ -110,14 +106,6 @@ void MouseInteractorStyle2::setObjectPointerValues(
     std::vector<vtkActor*>& pointerValues)
 {
     mPointerValues = pointerValues;
-}
-
-void MouseInteractorStyle2::setCallbacksForClickOnObject(
-    int(*callbackImg)(std::string),
-    int(*callbackSeries)(std::vector<std::string>&)             )
-{
-    mClickCallbackSingleImage = callbackImg;
-    mClickCallbackImageSeries = callbackSeries;
 }
 
 void MouseInteractorStyle2::resetAllBoxColors(void)

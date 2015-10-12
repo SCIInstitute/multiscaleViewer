@@ -11,6 +11,7 @@ add_executable(cartoon
                cartoon
                loadedVolumes
                mouse_interact
+               seg3dHandler
                PracticalSocket)
 
 CONFIGURE_FILE("load_volumes.txt" "load_volumes.txt")
