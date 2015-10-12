@@ -95,6 +95,8 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
             {
                 case parseHeader:
                     std::getline(linestream, tmpString, '\n');
+                    if( tmpString.substr(0, 1).compare("#") == 0 )
+                        continue;
                     if( tmpString.compare("VOLUME") != 0 )
                     {
                         std::string msg = "VOLUME header not found on line ";
@@ -106,6 +108,8 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
 
                 case parseFile:
                     std::getline(linestream, tmpString, '\n');
+                    if( tmpString.substr(0, 1).compare("#") == 0 )
+                        continue;
                     addOffsetToPath(tmpString);
                     if( doesPathRepresentImageSeries(tmpString) )
                     {
@@ -128,15 +132,17 @@ std::cout << "Single volume";
                     }
                     mVolFilename.push_back(tmpString);
                     fileState = parseOrigin;
-std::cout << "(" << mVolFilename[mNumVolumes] << " / ";
+std::cout << "([" << mVolFilename[mNumVolumes] << "]" << std::endl;
 for (auto& element : mImageSeriesFilenames[mNumVolumes])
-	std::cout << element << " ";
+	std::cout << element << std::endl;
 std::cout << ") at index " << mNumVolumes << "." << std::endl;
                     break;
 
                 case parseOrigin:
                     std::array<float, 3> tmpOrigin;
                     std::getline(linestream, tmpString, ' ');
+                    if( tmpString.substr(0, 1).compare("#") == 0 )
+                        continue;
                     tmpOrigin[0] = strtof(tmpString.c_str(), NULL);
                     std::getline(linestream, tmpString, ' ');
                     tmpOrigin[1] = strtof(tmpString.c_str(), NULL);
@@ -149,6 +155,8 @@ std::cout << ") at index " << mNumVolumes << "." << std::endl;
                 case parseXYresolution:
                     std::array<float, 2> tmpRes;
                     std::getline(linestream, tmpString, ' ');
+                    if( tmpString.substr(0, 1).compare("#") == 0 )
+                        continue;
                     tmpRes[0] = strtof(tmpString.c_str(), NULL);
                     std::getline(linestream, tmpString, '\n');
                     tmpRes[1] = strtof(tmpString.c_str(), NULL);
@@ -158,12 +166,16 @@ std::cout << ") at index " << mNumVolumes << "." << std::endl;
 
                 case parseSlices:
                     std::getline(linestream, tmpString, '\n');
+                    if( tmpString.substr(0, 1).compare("#") == 0 )
+                        continue;
                     mZslices.push_back(strtof(tmpString.c_str(), NULL));
                     fileState = parseSliceThickness;
                     break;
 
                 case parseSliceThickness:
                     std::getline(linestream, tmpString, '\n');
+                    if( tmpString.substr(0, 1).compare("#") == 0 )
+                        continue;
                     mSliceThickness.push_back(strtof(tmpString.c_str(), NULL));
                     fileState = parseHeader;
                     mNumVolumes++;
