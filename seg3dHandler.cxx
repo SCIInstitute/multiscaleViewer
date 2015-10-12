@@ -32,7 +32,7 @@ int seg3dHandler::sendToSeg3D_openVolumeCommand(std::string filename)
 int seg3dHandler::sendToSeg3D_openFileSeriesCommand(std::vector<std::string> filenames)
 {
   std::string cmdPfx, cmdFiles, cmdSfx;
-  cmdPfx  = "importSeries filenames='[";
+  cmdPfx  = "ImportSeries filenames='[";
 
   for (auto & element : filenames)
     cmdFiles += "[" + element + "],";
