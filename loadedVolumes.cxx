@@ -7,8 +7,8 @@
 #include <sstream>
 #include "loadedVolumes.hpp"
 
-loadedVolumes::loadedVolumes(std::string sourceFilename) :
-    mNumVolumes(0), mSourceFilename(sourceFilename)
+loadedVolumes::loadedVolumes(std::string sourceFilename, std::string offset) :
+    mNumVolumes(0), mSourceFilename(sourceFilename), mPathOffset(offset)
 {
     readVolumesDescriptionFile();
 }
@@ -49,6 +49,12 @@ void loadedVolumes::populateImageSeriesListFromFileFilterString(
         throw std::string("Cannot open pipe to get image series listing.");
     }
 
+}
+
+void loadedVolumes::addOffsetToPath(std::string& filePathInput)
+{
+    if( mPathOffset.size() != 0 )
+    	filePathInput = mPathOffset + filePathInput;
 }
 
 std::string loadedVolumes::removeNewlineAndConvertToString(char* buffer)
@@ -100,6 +106,7 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
 
                 case parseFile:
                     std::getline(linestream, tmpString, '\n');
+                    addOffsetToPath(tmpString);
                     if( doesPathRepresentImageSeries(tmpString) )
                     {
                         mIsImageSeries.push_back(true);

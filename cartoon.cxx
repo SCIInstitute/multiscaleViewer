@@ -116,6 +116,9 @@ void setupCamera(vtkCamera* cam)
   cam->Elevation(30.0);
 }
 
+//Setup the mouse handlers for both left-clicking on an object to load its
+// contents/images [MouseInteractorStyle2], and right-clicking (or hovering
+// depending on platform) on an object for info [vtkHoverWidget].
 void setupMouseControls(vtkHoverWidget* hoverWidget,
     vtkRenderer* aRenderer,
     std::vector<std::string>& boxDescription,
@@ -180,7 +183,7 @@ void addAllActorsToRenderer(unsigned int num, vtkRenderer* renderer,
   }
 }
 
-int setupAndRunVtkEnvironment(void)
+int setupAndRunVtkEnvironment(std::string pathOffset)
 {
   vtkSmartPointer<vtkRenderer> aRenderer = vtkSmartPointer<vtkRenderer>::New();
   vtkSmartPointer<vtkRenderWindow> renWin =
@@ -197,7 +200,7 @@ int setupAndRunVtkEnvironment(void)
   size_t numBoxes = 0;
 
   try {
-    loadedVolumes volumeData("load_volumes.txt");
+    loadedVolumes volumeData("load_volumes.txt", pathOffset);
     numBoxes = volumeData.getNumLoadedVolumes();
 
     seg3dHandler seg3dHandle(&volumeData);
@@ -263,7 +266,11 @@ int setupAndRunVtkEnvironment(void)
 ///////////////////////////////////////////////////////////////////////////////
 int main (int argc, char *argv[])
 {
-  setupAndRunVtkEnvironment();
+	std::string pathOffset;
+	if (argc == 2)
+		pathOffset = argv[1];
 
-  return 0;
+    setupAndRunVtkEnvironment(pathOffset);
+
+    return 0;
 }

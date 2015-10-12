@@ -10,7 +10,7 @@
 class loadedVolumes
 {
 public:
-    loadedVolumes(std::string sourceFilename);
+    loadedVolumes(std::string sourceFilename, std::string pathOffset);
     loadedVolumes(const loadedVolumes& src);
     virtual ~loadedVolumes(void);
     loadedVolumes& operator=(const loadedVolumes& rhs);
@@ -38,9 +38,11 @@ private:
     std::string removeNewlineAndConvertToString(char* buffer);
     void populateImageSeriesListFromFileFilterString(std::string filter,
         size_t indexIntoListsOfFiles);
+    virtual void addOffsetToPath(std::string& filePathInput);
     virtual void copyFrom(const loadedVolumes& src);
 
     size_t mNumVolumes;
+    std::string mPathOffset;
     std::string mSourceFilename;
     std::vector<std::string> mVolFilename;
     std::vector<std::vector<std::string> > mImageSeriesFilenames;
