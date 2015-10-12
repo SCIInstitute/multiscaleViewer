@@ -5,18 +5,23 @@
 #include "PracticalSocket.h"
 #include "seg3dHandler.hpp"
 
+//#define SOCKET_BYPASS_TEST
 
 
 int seg3dHandler::sendSocketCommandToSeg3D(std::string command)
 {
-  try {
-    TCPSocket sock(mHost, mPort);
-    sock.send(command.c_str(), command.length());
-  } catch(SocketException &e) {
-    std::cerr << e.what() << endl;
-    return 1;
-  }
-  return 0;
+#ifdef SOCKET_BYPASS_TEST
+	std::cout << "SOCKET_SEND: " << command << std::endl;
+#else
+    try {
+      TCPSocket sock(mHost, mPort);
+      sock.send(command.c_str(), command.length());
+    } catch(SocketException &e) {
+      std::cerr << e.what() << endl;
+      return 1;
+    }
+    return 0;
+#endif
 }
 
 int seg3dHandler::sendToSeg3D_openVolumeCommand(std::string filename)
@@ -53,27 +58,27 @@ int seg3dHandler::determineCallToSeg3d(size_t objectIndex)
 
 int seg3dHandler::objectClickedCallback(size_t objectIndex)
 {
-  	 std::string openMessagePrefix;
-     std::string filenameOfVolume;
+    std::string openMessagePrefix;
+    std::string filenameOfVolume;
 
-     if( mVolumes->isVolumeImageSeries(objectIndex) )
-     {
-         filenameOfVolume = mVolumes->mImageSeriesFilenames(objectIndex);
-         openMessagePrefix = "Opening image series: ";
-     }
-     else
-     {
-         filenameOfVolume = mVolumes->mVolFilename(objectIndex);
-         openMessagePrefix = "Opening single image/volume: ";
-     }
+    if( mVolumes->isVolumeImageSeries(objectIndex) )
+    {
+        filenameOfVolume = mVolumes->getVolFilenames(objectIndex);
+        openMessagePrefix = "Opening image series: ";
+    }
+    else
+    {
+        filenameOfVolume = mVolumes->getVolFilenames(objectIndex);
+        openMessagePrefix = "Opening single image/volume: ";
+    }
 
-     if( filenameOfVolume.length() != 0 )
-     {
-         std::cout << openMessagePrefix << filenameOfVolume;
-         std::cout << " in Seg3D." << std::endl;
-         return sendToSeg3D_openFileSeriesCommand(mFilename[objectIndex]);
-     }
-     else
-    	 return -9;
-     }
+    if( filenameOfVolume.length() != 0 )
+    {
+        std::cout << openMessagePrefix << filenameOfVolume;
+        std::cout << " in Seg3D." << std::endl;
+        return sendToSeg3D_openFileSeriesCommand(
+        mVolumes->getImageSeriesListing(objectIndex));
+    }
+    else
+        return -9;
 }

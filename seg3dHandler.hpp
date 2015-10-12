@@ -12,7 +12,7 @@ class seg3dHandler
 {
     public:
 	    seg3dHandler(loadedVolumes* volumes) : mVolumes(volumes) {}
-	    ~seg3dHandler();
+	    virtual ~seg3dHandler(void) {}
         int sendToSeg3D_openVolumeCommand(std::string filename);
         int sendToSeg3D_openFileSeriesCommand(std::vector<std::string> filenames);
         int objectClickedCallback(size_t objectIndex);
