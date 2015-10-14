@@ -24,6 +24,7 @@
 #include <vtkContourFilter.h>
 #include <vtkImageData.h>
 #include <vtkImageMapToColors.h>
+#include <vtkCubeSource.h>
 #include <vtkImageActor.h>
 #include <vtkSmartPointer.h>
 #include <vtkImageMapper3D.h>
@@ -74,16 +75,35 @@ void setBackground(vtkRenderer* render,
   renWin->SetSize(900, 600);
 }
 
-void setDetailsForEachVolumeAsSpecifiedInFile(vtkVolume16Reader* box,
+  void setCubeDimensions(vtkCubeSource* box, const std::array<float, 2> dim2D,
+		                 const float z)
+  {
+    box->SetXLength(dim2D[0]);
+    box->SetYLength(dim2D[1]);
+    box->SetZLength(z);
+  }
+
+  std::array<float, 2> setCubeCenter(vtkCubeSource* box,
+                                     std::array<float, 3>& tmpOrigin,
+		                             const std::array<float, 2>& dim2D,
+		                             const float z)
+  {
+    //Divide by 2 in order to set cube center rather than origin
+    tmpOrigin[0] += dim2D[0] / 2;
+    tmpOrigin[1] += dim2D[1] / 2;
+    tmpOrigin[2] += z / 2;
+    box->SetCenter(tmpOrigin[0], tmpOrigin[1], tmpOrigin[2]);
+  }
+
+void setDetailsForEachVolumeAsSpecifiedInFile(vtkCubeSource* box,
                                               loadedVolumes* volData,
                                              size_t i, std::string& description)
 {
-  std::array<float, 2> tmpRes = volData->getXYresolution(i);
-  box->SetDataDimensions(tmpRes[0], tmpRes[1]);
-  box->SetImageRange(1, volData->getZslices(i)
-                        * volData->getSliceThickness(i));
+  std::array<float, 2> tmpResolution = volData->getXYresolution(i);
+  float zDim = volData->getZslices(i) * volData->getSliceThickness(i);
+  setCubeDimensions(box, tmpResolution, zDim);
   std::array<float, 3> tmpOrigin = volData->getOrigin(i);
-  box->SetDataOrigin(tmpOrigin[0], tmpOrigin[1], tmpOrigin[2]);
+  setCubeCenter(box, tmpOrigin, tmpResolution, zDim);
   box->Update();
 
   description = createDescription(i, volData->getXYresolution(i),
@@ -99,7 +119,7 @@ void setupOutlineFilterForSpecificVolume(vtkOutlineFilter* outlineFilter,
 }
 
 void setupPolyDataMapperForSpecificVolume(vtkPolyDataMapper* polyMap,
-                                          vtkOutlineFilter* outlineFilter)
+                                          vtkCubeSource* outlineFilter)
 {
 
   polyMap->SetInputConnection(outlineFilter->GetOutputPort());
@@ -215,15 +235,15 @@ int setupAndRunVtkEnvironment(std::string pathOffset)
     std::vector<std::string> boxFilename(numBoxes);
     std::vector<std::vector<std::string> > boxImageSeriesFilenames(numBoxes);
     std::vector<vtkActor*> boxActorPointer(numBoxes);
-    std::vector<vtkSmartPointer<vtkVolume16Reader> > box(numBoxes);
-    std::vector<vtkSmartPointer<vtkOutlineFilter> > outlineData(numBoxes);
+    std::vector<vtkSmartPointer<vtkCubeSource> > box(numBoxes);
+//    std::vector<vtkSmartPointer<vtkOutlineFilter> > outlineData(numBoxes);
     std::vector<vtkSmartPointer<vtkPolyDataMapper> > mapOutline(numBoxes);
     std::vector<vtkSmartPointer<vtkActor> > outline(numBoxes);
   
     for (size_t i = 0; i < numBoxes; ++i)
     {
-      box[i] = vtkSmartPointer<vtkVolume16Reader>::New();
-      outlineData[i] = vtkSmartPointer<vtkOutlineFilter>::New();
+      box[i] = vtkSmartPointer<vtkCubeSource>::New();
+//      outlineData[i] = vtkSmartPointer<vtkOutlineFilter>::New();
       mapOutline[i] = vtkSmartPointer<vtkPolyDataMapper>::New();
       outline[i] = vtkSmartPointer<vtkActor>::New();
 
@@ -231,8 +251,8 @@ int setupAndRunVtkEnvironment(std::string pathOffset)
                                                boxDescription[i]);
       boxFilename[i] = volumeData.getVolFilenames(i);
       boxImageSeriesFilenames[i] = volumeData.getImageSeriesListing(i);
-      setupOutlineFilterForSpecificVolume(outlineData[i], box[i]);
-      setupPolyDataMapperForSpecificVolume(mapOutline[i], outlineData[i]); 
+//      setupOutlineFilterForSpecificVolume(outlineData[i], box[i]);
+      setupPolyDataMapperForSpecificVolume(mapOutline[i], box[i]);
       setupActorForSpecificVolume(outline[i], mapOutline[i]);
       boxActorPointer[i] = outline[i];
       std::cout << "Created outline " << i << " with address: " << outline[i];
