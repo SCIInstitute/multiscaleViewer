@@ -5,7 +5,7 @@
 #include "PracticalSocket.h"
 #include "seg3dHandler.hpp"
 
-#define SOCKET_VERBOSE_TEST
+//#define SOCKET_VERBOSE_TEST
 
 int seg3dHandler::sendSocketCommandToSeg3D(std::string command)
 {

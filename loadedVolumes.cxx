@@ -7,6 +7,8 @@
 #include <sstream>
 #include "loadedVolumes.hpp"
 
+const bool VerboseVolumeFileOutput = false;
+
 loadedVolumes::loadedVolumes(std::string sourceFilename, std::string offset) :
     mNumVolumes(0), mSourceFilename(sourceFilename), mPathOffset(offset)
 {
@@ -120,7 +122,8 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
                         } catch(std::string &e) {
                           std::cerr << e << std::endl;
                         }
-std::cout << "Image series";
+                        if( VerboseVolumeFileOutput )
+                            std::cout << "Image series";
                     }
                     else
                     {
@@ -128,14 +131,20 @@ std::cout << "Image series";
                     	std::vector<std::string> tmpV;
                     	tmpV.push_back(tmpString);
                     	mImageSeriesFilenames.push_back(tmpV);
-std::cout << "Single volume";
+                        if( VerboseVolumeFileOutput )
+                            std::cout << "Single volume";
                     }
                     mVolFilename.push_back(tmpString);
                     fileState = parseOrigin;
-std::cout << "([" << mVolFilename[mNumVolumes] << "]" << std::endl;
-for (auto& element : mImageSeriesFilenames[mNumVolumes])
-	std::cout << element << std::endl;
-std::cout << ") at index " << mNumVolumes << "." << std::endl;
+                    if( VerboseVolumeFileOutput )
+                    {
+                        std::cout << "([" << mVolFilename[mNumVolumes]
+                            << "]" << std::endl;
+                        for (auto& element : mImageSeriesFilenames[mNumVolumes])
+                            std::cout << element << std::endl;
+                        std::cout << ") at index " << mNumVolumes
+                            << "." << std::endl;
+                    }
                     break;
 
                 case parseOrigin:
