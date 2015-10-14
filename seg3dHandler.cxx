@@ -32,14 +32,14 @@ int seg3dHandler::sendToSeg3D_openVolumeCommand(std::string filename)
 int seg3dHandler::sendToSeg3D_openFileSeriesCommand(std::vector<std::string> filenames)
 {
   std::string cmdPfx, cmdFiles, cmdSfx;
-  cmdPfx  = "ImportSeries filenames='[";
+  cmdPfx  = "importseries(filenames=\"[";
 
   for (auto & element : filenames)
     cmdFiles += "[" + element + "],";
   cmdFiles = cmdFiles.substr(0, cmdFiles.size() - 1);
 
-  cmdSfx  = "]' importer='[ITK FileSeries Importer]' ";
-  cmdSfx += "mode='data' inputfiles_id='-1'";
+  cmdSfx  = "]\", importer=\"[ITK FileSeries Importer]\")";
+  //cmdSfx += "mode='data' inputfiles_id='-1'";
   cmdSfx += "\r\n";
   return (sendSocketCommandToSeg3D(cmdPfx + cmdFiles + cmdSfx));
 }
