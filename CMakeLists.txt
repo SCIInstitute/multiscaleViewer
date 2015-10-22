@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 2.8)
 
-PROJECT(cartoon)
+PROJECT(multiscale)
 
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
 SET(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "-std=c++11")
-add_executable(cartoon
+add_executable(multiscale
                MACOSX_BUNDLE
                cartoon
                loadedVolumes
@@ -17,7 +17,7 @@ add_executable(cartoon
 CONFIGURE_FILE("load_volumes.txt" "load_volumes.txt")
 
 if(VTK_LIBRARIES)
-  target_link_libraries(cartoon ${VTK_LIBRARIES})
+  target_link_libraries(multiscale ${VTK_LIBRARIES})
 else()
-  target_link_libraries(cartoon vtkHybrid vtkWidgets)
+  target_link_libraries(multiscale vtkHybrid vtkWidgets)
 endif()
