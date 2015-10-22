@@ -63,7 +63,6 @@ void MouseInteractorStyle2::OnLeftButtonDown()
 {
     int* clickPos = this->GetInteractor()->GetEventPosition();
 
-#ifdef ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS 
   // Pick from this location.
     vtkSmartPointer<vtkPropPicker>  picker =
       vtkSmartPointer<vtkPropPicker>::New();
@@ -81,7 +80,6 @@ void MouseInteractorStyle2::OnLeftButtonDown()
             mSeg3dHandle->objectClickedCallback(j);
         }
     }
-#endif //ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS 
     // Forward events (this forces a re-render)
     vtkInteractorStyleTrackballCamera::OnLeftButtonDown();
 }

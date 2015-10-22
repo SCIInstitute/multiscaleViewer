@@ -14,22 +14,35 @@
 #include <vtkSmartPointer.h>
 #include "seg3dHandler.hpp"
 
-
-//ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS will highlight a volume bounding box
-// if it is clicked-on, and will send box's description to stdout.
-#define ENABLE_MOUSE_CLICK_SELECTION_OF_ITEMS
-
+/*MouseInteractorStyle2 class
+ * Gene Payne
+ * This class provides a method for clicking on a volume bounding box
+ * in order to select it for viewing purposes.
+ * Left-clicking on a volume box will invoke the seg3dHandler callback
+ * that corresponds to that volume.
+*/
 class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
 {
   public:
     static MouseInteractorStyle2* New();
     vtkTypeMacro(MouseInteractorStyle2, vtkInteractorStyleTrackballCamera);
     virtual void OnLeftButtonDown(void);
+    //Call setObjectDescriptions with a vector of strings to provide a
+    // description for each volume in the set. This description is sent
+    // to stdout when the volume box is selected.
     virtual void setObjectDescriptions(
         const std::vector<std::string>& descriptions);
+    //Call setObjectPointerValues with a vector of pointers to vtkActor
+    // objects for each volume bounding box. This provides the mouse interactor
+    // with a way to know which VTK actor was selected.
     virtual void setObjectPointerValues(std::vector<vtkActor*>& pointerValues);
+    //setRenderer and setWindowRenderer give the mouse interactor pointers to
+    // the VTK renderer and window renderer so it can determine which box
+    // was selected, and get information about that volume box.
     virtual void setRenderer(vtkRenderer* aRender);
     virtual void setWindowRenderer(vtkRenderWindow* wRender);
+    //setSeg3dHandler sets pointer to the seg3dHandler object which will call
+    // the Seg3D application to open the volume if selected
     virtual void setSeg3dHandler(seg3dHandler* seg3dH)
         { mSeg3dHandle = seg3dH; }
  
@@ -44,7 +57,13 @@ class MouseInteractorStyle2 : public vtkInteractorStyleTrackballCamera
 };
 
 
-
+/*vtkHoverCallback class
+ * Gene Payne
+ * This class provides a method for hovering the mouse over a volume bounding
+ * box in order to get information about it in stdout without selecting it
+ * for detailed viewing. Hovering over an object for about 2 seconds will
+ * invoke this functionality.
+*/
 class vtkHoverCallback : public vtkCommand
 {
   public:
@@ -56,12 +75,20 @@ class vtkHoverCallback : public vtkCommand
  
     virtual void Execute(vtkObject*, unsigned long event,
         void *vtkNotUsed(calldata));
-
+    //setRenderer, setWindowRenderer, and setRenderWindowInteractor give the
+    // mouse hover interactor pointers to the VTK objects that provide this
+    // handler with information about which volume box is being hovered-over
     virtual void setRenderWindowInteractor(vtkRenderWindowInteractor* rwi);
     virtual void setRenderer(vtkRenderer* aRender);
     virtual void setWindowRenderer(vtkRenderWindow* wRender);
+    //Call setObjectDescriptions with a vector of strings to provide a
+    // description for each volume in the set. This description is sent
+    // to stdout when the volume box is selected.
     virtual void setObjectDescriptions(
         const std::vector<std::string>& descriptions);
+    //Call setObjectPointerValues with a vector of pointers to vtkActor
+     // objects for each volume bounding box. This provides the mouse interactor
+     // with a way to know which VTK actor was selected.
     virtual void setObjectPointerValues(std::vector<vtkActor*>& pointerValues);
 
   private:
