@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include "loadedVolumes.hpp"
 
 const bool VerboseVolumeFileOutput = false;
@@ -13,6 +14,7 @@ loadedVolumes::loadedVolumes(std::string sourceFilename, std::string offset) :
     mNumVolumes(0), mSourceFilename(sourceFilename), mPathOffset(offset)
 {
     readVolumesDescriptionFile();
+    scaleVolumesThatAreTooSmallToBeVisible();
 }
 
 loadedVolumes::loadedVolumes(const loadedVolumes& src)
@@ -205,6 +207,97 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
         throw std::string("Cannot open file for approved drives list.");
     }
     return mNumVolumes;
+}
+
+void loadedVolumes::scaleVolumesThatAreTooSmallToBeVisible(void)
+{
+	float tmpDim[3];
+
+    findLargestSingleDimensionInVolumeSet();
+    for (unsigned int i = 0; i < mNumVolumes; ++i)
+    {
+    	getThreeDimsOfThisVolume(i, tmpDim);
+        if( getNumAxesThatAreTooSmall(tmpDim) == ALL_THREE_AXES )
+        {
+            scaleUpAnIndividualVolume(i, tmpDim);
+        }
+    }
+}
+
+void loadedVolumes::scaleUpAnIndividualVolume(unsigned int volIndex,
+		                       float (&tmpDim)[THREE_DIMENSIONS])
+{
+    float largestDimInThisVolume = *std::max_element(tmpDim,
+        tmpDim + THREE_DIMENSIONS);
+	float scaleUpFactor = mSmallestAcceptableSizeRatio
+        / (largestDimInThisVolume / mLargestSingleDim);
+	for (unsigned int j = 0; j < TWO_DIMENSIONS; ++j)
+		mXYresolution[volIndex][j] = tmpDim[j] * scaleUpFactor;
+    mSliceThickness[volIndex] = tmpDim[Z_AXIS] * scaleUpFactor
+        / mZslices[volIndex];
+}
+
+void loadedVolumes::getThreeDimsOfThisVolume(unsigned int volIndex,
+		                                     float (&tmpDim)[THREE_DIMENSIONS])
+{
+    tmpDim[X_AXIS] = mXYresolution[volIndex][X_AXIS];
+    tmpDim[Y_AXIS] = mXYresolution[volIndex][Y_AXIS];
+    tmpDim[Z_AXIS] = mSliceThickness[volIndex] * mZslices[volIndex];
+}
+
+unsigned int loadedVolumes::getNumAxesThatAreTooSmall(
+    float (&tmpDim)[THREE_DIMENSIONS])
+{
+	unsigned int count = 0;
+    count += checkIfSingleDimIsTooSmall(tmpDim[X_AXIS]);
+    count += checkIfSingleDimIsTooSmall(tmpDim[Y_AXIS]);
+    count += checkIfSingleDimIsTooSmall(tmpDim[Z_AXIS]);
+    return count;
+}
+
+unsigned int loadedVolumes::checkIfSingleDimIsTooSmall(float dim)
+{
+    if( dim < (mSmallestAcceptableSizeRatio * mLargestSingleDim) )
+        return 1;
+    else
+    	return 0;
+}
+
+void loadedVolumes::findLargestSingleDimensionInVolumeSet(void)
+{
+	float largestSingleDim[THREE_DIMENSIONS] = {0, 0, 0};
+	unsigned int i;
+	float tmpDim;
+
+	findLargestDimInXorY();
+    findLargestDimInZ();
+    mLargestSingleDim = *std::max_element(mLargestDimInVolumes,
+        mLargestDimInVolumes + THREE_DIMENSIONS);
+}
+
+void loadedVolumes::findLargestDimInXorY(void)
+{
+	unsigned int i;
+    for (auto& it : mXYresolution)
+    {
+        for (i = 0; i < TWO_DIMENSIONS; ++i)
+    	{
+            if( it[i] > mLargestDimInVolumes[i] )
+                mLargestDimInVolumes[i] = it[i];
+    	}
+    }
+}
+
+void loadedVolumes::findLargestDimInZ(void)
+{
+	unsigned int i;
+	float tmpDim;
+    for (i = 0; i < mNumVolumes; ++i)
+    {
+    	tmpDim = mSliceThickness[i] * mZslices[i];
+    	if( tmpDim > mLargestDimInVolumes[Z_AXIS] )
+    		mLargestDimInVolumes[Z_AXIS] = tmpDim;
+    }
 }
 
 void loadedVolumes::copyFrom(const loadedVolumes& src)

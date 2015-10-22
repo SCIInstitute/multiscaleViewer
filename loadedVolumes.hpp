@@ -19,6 +19,12 @@
 #include <array>
 
 #define MAX_SINGLE_FILENAME_SIZE 500
+#define X_AXIS 0
+#define Y_AXIS 1
+#define Z_AXIS 2
+#define TWO_DIMENSIONS 2
+#define THREE_DIMENSIONS 3
+#define ALL_THREE_AXES 3
 
 class loadedVolumes
 {
@@ -53,6 +59,17 @@ private:
         size_t indexIntoListsOfFiles);
     virtual void addOffsetToPath(std::string& filePathInput);
     virtual void copyFrom(const loadedVolumes& src);
+    void scaleVolumesThatAreTooSmallToBeVisible(void);
+    void findLargestSingleDimensionInVolumeSet(void);
+    unsigned int checkIfSingleDimIsTooSmall(float dim);
+    unsigned int getNumAxesThatAreTooSmall(
+   	    float (&tmpDim)[THREE_DIMENSIONS]);
+    void findLargestDimInXorY(void);
+    void findLargestDimInZ(void);
+    void scaleUpAnIndividualVolume(unsigned int volIndex,
+        float (&tmpDim)[THREE_DIMENSIONS]);
+    void getThreeDimsOfThisVolume(unsigned int volIndex,
+    	                          float (&tmpDim)[THREE_DIMENSIONS]);
 
     size_t mNumVolumes;
     std::string mPathOffset;
@@ -64,6 +81,9 @@ private:
     std::vector<float> mZslices;
     std::vector<float> mSliceThickness;
     std::vector<bool> mIsImageSeries;
+    float mLargestDimInVolumes[3] = {0, 0, 0};
+    float mLargestSingleDim = 0;
+    const float mSmallestAcceptableSizeRatio = 0.04;
 
     enum FileReadState {
         parseHeader = 0,
