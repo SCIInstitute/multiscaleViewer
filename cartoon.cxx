@@ -272,10 +272,11 @@ int setupAndRunVtkEnvironment(std::string pathOffset)
 ///////////////////////////////////////////////////////////////////////////////
 int main (int argc, char *argv[])
 {
-	std::string pathOffset;
-	if (argc == 2)
-		pathOffset = argv[1];
+    std::string pathOffset;
+    if (argc == 2)
+        pathOffset = argv[1];
 
+    std::cout << "Multi-Scale Viewer v0.9" << std::endl;
     setupAndRunVtkEnvironment(pathOffset);
 
     return 0;
