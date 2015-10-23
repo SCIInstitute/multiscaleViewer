@@ -139,7 +139,7 @@ private:
     std::vector<bool> mIsImageSeries;
     float mLargestDimInVolumes[3] = {0, 0, 0};
     float mLargestSingleDim = 0;
-    const float mSmallestAcceptableSizeRatio = 0.04;
+    const float mSmallestAcceptableSizeRatio = 0.01;
 
     enum FileReadState {
         parseHeader = 0,
