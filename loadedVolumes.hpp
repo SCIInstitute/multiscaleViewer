@@ -93,10 +93,18 @@ public:
     const std::string getVolFilenames(size_t idx)
         const { return mVolFilename[idx]; }
     //isVolumeImageSeries returns true if the volume specified by idx is a
-    // volume composed of a series of images. If false, this is a volume
-    // represented by a single nrrd file.
+    // volume composed of a series of images. If false, this is either a volume
+    // represented by a single nrrd file, or a 2D image. A call to method
+    // isSingleVolume() specifies which of these is true.
     const bool isVolumeImageSeries(size_t idx)
         const { return mIsImageSeries[idx]; }
+    //isSingleVolume returns true if the filename specifies a volume rather
+    // than only a single image file (2D image). If true, this is a volume
+    // represented in a single nrrd file. If false, this is a single image
+    // file represented by tiff, jpg, or similar file format.
+    // represented by a single nrrd file.
+    const bool isSingleVolume(size_t idx)
+        const { return mIsSingleVolume[idx]; }
     //getNumLoadedVolumes provides the number of image files that compose a
     // volume given the volume idx
     const size_t getNumImagesInSeries(size_t idx)
@@ -137,6 +145,7 @@ private:
     std::vector<float> mZslices;
     std::vector<float> mSliceThickness;
     std::vector<bool> mIsImageSeries;
+    std::vector<bool> mIsSingleVolume;
     float mLargestDimInVolumes[3] = {0, 0, 0};
     float mLargestSingleDim = 0;
     const float mSmallestAcceptableSizeRatio = 0.01;

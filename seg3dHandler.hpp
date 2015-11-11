@@ -33,6 +33,9 @@ class seg3dHandler
 	    //Sends a command to Seg3D to open a single volume file (e.g. nrrd)
 	    // filename contains the path to the file.
         int sendToSeg3D_openVolumeCommand(std::string filename);
+        //Sends a command to Seg3D to open a single image file (e.g. tiff),
+        // rather than an image series. filename contains the path to the file.
+        int sendToSeg3D_openOneFileCommand(std::string filename);
 	    //Sends a command to Seg3D to open a series of images that constitute
         // a data volume. filenames contains a filter string that specified
         // the file pattern that will capture all files in the volume

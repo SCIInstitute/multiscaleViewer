@@ -29,6 +29,13 @@ int seg3dHandler::sendToSeg3D_openVolumeCommand(std::string filename)
   return (sendSocketCommandToSeg3D(cmd));
 }
 
+int seg3dHandler::sendToSeg3D_openOneFileCommand(std::string filename)
+{
+  std::string cmd = "importlayer(filename=\"" + filename + "\", ";
+  cmd += "importer=\"[ITK Importer]\")\r\n";
+  return (sendSocketCommandToSeg3D(cmd));
+}
+
 int seg3dHandler::sendToSeg3D_openFileSeriesCommand(std::vector<std::string> filenames)
 {
   std::string cmdPfx, cmdFiles, cmdSfx;
@@ -47,11 +54,23 @@ int seg3dHandler::sendToSeg3D_openFileSeriesCommand(std::vector<std::string> fil
 int seg3dHandler::determineCallToSeg3d(size_t objectIndex)
 {
     if( mVolumes->isVolumeImageSeries(objectIndex) )
+    {
         return sendToSeg3D_openFileSeriesCommand(
             mVolumes->getImageSeriesListing(objectIndex));
+    }
     else
-        return sendToSeg3D_openVolumeCommand(
-            mVolumes->getVolFilenames(objectIndex));
+    {
+    	if( mVolumes->isSingleVolume(objectIndex) )
+    	{
+            return sendToSeg3D_openVolumeCommand(
+                mVolumes->getVolFilenames(objectIndex));
+    	}
+    	else
+    	{
+            return sendToSeg3D_openOneFileCommand(
+                mVolumes->getVolFilenames(objectIndex));
+    	}
+    }
 }
 
 int seg3dHandler::objectClickedCallback(size_t objectIndex)

@@ -40,9 +40,6 @@
 #include "seg3dHandler.hpp"
 
 
-int sendToSeg3D_openVolumeCommand(std::string filename);
-int sendToSeg3D_openFileSeriesCommand(std::vector<std::string> filenames);
-
 vtkStandardNewMacro(MouseInteractorStyle2);
 
 std::string createDescription(int boxNum, std::array<float, 2> xySize,

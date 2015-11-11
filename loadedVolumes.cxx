@@ -79,6 +79,15 @@ bool doesPathRepresentImageSeries(std::string filePath)
     	return false;
 }
 
+bool doesPathRepresentSingleVolumeFile(std::string filePath)
+{
+    std::size_t found = filePath.find('.nrrd');
+    if( found != std::string::npos )
+        return true;
+    else
+    	return false;
+}
+
 size_t loadedVolumes::readVolumesDescriptionFile(void)
 {
     std::ifstream file(mSourceFilename);
@@ -129,12 +138,22 @@ size_t loadedVolumes::readVolumesDescriptionFile(void)
                     }
                     else
                     {
-                    	mIsImageSeries.push_back(false);
-                    	std::vector<std::string> tmpV;
-                    	tmpV.push_back(tmpString);
-                    	mImageSeriesFilenames.push_back(tmpV);
-                        if( VerboseVolumeFileOutput )
-                            std::cout << "Single volume";
+                        mIsImageSeries.push_back(false);
+                        std::vector<std::string> tmpV;
+                        tmpV.push_back(tmpString);
+                        mImageSeriesFilenames.push_back(tmpV);
+                        if( doesPathRepresentSingleVolumeFile(tmpString) )
+                        {
+                        	mIsSingleVolume.push_back(true);
+                        	if( VerboseVolumeFileOutput )
+                                std::cout << "Single volume";
+                        }
+                        else
+                        {
+                        	mIsSingleVolume.push_back(false);
+                        	if( VerboseVolumeFileOutput )
+                                std::cout << "Single file";
+                        }
                     }
                     mVolFilename.push_back(tmpString);
                     fileState = parseOrigin;
@@ -311,4 +330,5 @@ void loadedVolumes::copyFrom(const loadedVolumes& src)
     mZslices = src.mZslices;
     mSliceThickness = src.mSliceThickness;
     mIsImageSeries = src.mIsImageSeries;
+    mIsSingleVolume = src.mIsSingleVolume;
 }
