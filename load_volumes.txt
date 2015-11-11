@@ -1,4 +1,10 @@
 VOLUME
+~/Dropbox/TileSet2stitchedImageJ.tif
+0 0 0
+8396 7248
+1
+1
+VOLUME
 /Users/gpayne/multiscale_viewer/nano_data/PolsonXFRshale/marl\ 1_*.BMP
 0 0 0
 48640 38000
