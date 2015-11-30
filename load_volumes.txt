@@ -1,5 +1,5 @@
 VOLUME
-~/Dropbox/TileSet2stitchedImageJ.tif
+/Users/gpayne/multiscale_viewer/nano_data/TileSet2stitchedImageJ.tif
 0 0 0
 8396 7248
 1
